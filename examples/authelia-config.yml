@@ -1,0 +1,289 @@
+# Authelia Configuration Example
+#
+# CRITICAL SECURITY WARNING:
+# This file contains PLACEHOLDER values. You MUST:
+# 1. Generate ALL secrets with: openssl rand -base64 64
+# 2. Replace "example.com" with your actual domain
+# 3. Never commit this file with real secrets to version control
+# 4. Store production secrets in environment variables or secure vault
+#
+# This example uses file-based authentication (users_database.yml).
+# For LDAP backend, see: https://www.authelia.com/configuration/first-factor/ldap/
+#
+# Authelia Documentation: https://www.authelia.com/configuration/prologue/introduction/
+
+---
+###############################################################################
+# Server Configuration
+###############################################################################
+
+server:
+  host: 0.0.0.0
+  port: 9091
+
+  # Asset path for custom branding (optional)
+  asset_path: /config/assets/
+
+###############################################################################
+# Logging
+###############################################################################
+
+log:
+  level: info  # Options: trace, debug, info, warn, error
+  format: text # Options: text, json
+
+###############################################################################
+# Theme
+###############################################################################
+
+theme: auto  # Options: light, dark, auto
+
+###############################################################################
+# JWT Secret (Token Signing)
+###############################################################################
+
+# CRITICAL: Generate with `openssl rand -base64 64`
+# This secret is used to sign JWT tokens for internal authentication
+jwt_secret: REPLACE_WITH_YOUR_JWT_SECRET_GENERATED_WITH_OPENSSL_RAND_BASE64_64
+
+###############################################################################
+# Default Redirection URL
+###############################################################################
+
+# Where to redirect users after successful authentication
+# IMPORTANT: Replace example.com with your actual domain
+default_redirection_url: https://example.com
+
+###############################################################################
+# TOTP (Time-based One-Time Password / 2FA)
+###############################################################################
+
+totp:
+  # TOTP issuer name (appears in authenticator apps)
+  issuer: example.com
+
+  # TOTP period (30 seconds is standard)
+  period: 30
+
+  # Number of digits in TOTP code
+  skew: 1
+
+###############################################################################
+# Authentication Backend
+###############################################################################
+
+authentication_backend:
+  # Disable password reset (set to true to enable email-based reset)
+  password_reset:
+    disable: true
+
+  # Refresh interval for user database changes
+  refresh_interval: 5m
+
+  # File-based authentication
+  file:
+    path: /config/users_database.yml
+
+    # CRITICAL: Enable file watching for live user updates
+    # Set to true if using authelia-file-admin or manual editing
+    watch: true
+
+    password:
+      # Password hashing algorithm (argon2id is most secure)
+      algorithm: argon2id
+
+      # Argon2id parameters (high security, compatible with authelia-file-admin)
+      argon2id:
+        variant: argon2id
+        iterations: 3
+        memory: 65536     # 64 MB
+        parallelism: 4
+        key_length: 32
+        salt_length: 16
+
+###############################################################################
+# Access Control
+###############################################################################
+
+access_control:
+  # Default policy for all requests (deny, bypass, one_factor, two_factor)
+  default_policy: deny
+
+  # Specific rules (evaluated in order)
+  rules:
+    # Authelia portal - must be accessible without authentication
+    - domain: example.com
+      policy: bypass
+      resources:
+        - "^/auth.*$"
+        - "^/static/.*$"
+        - "^/api/verify.*$"
+        - "^/api/authz/.*$"
+        - "^/locales/.*$"
+
+    # Admin routes - require two-factor authentication and 'admins' group
+    - domain: example.com
+      policy: two_factor
+      resources:
+        - "^/admin.*$"
+        - "^/api/admin/.*$"
+        - "^/portainer.*$"
+      subject:
+        - "group:admins"
+
+    # Excalidraw subdomains - require one-factor authentication
+    - domain:
+        - "xcal.example.com"
+        - "xcal-storage.example.com"
+        - "xcal-collab.example.com"
+      policy: one_factor
+
+    # Nexterm - require two-factor authentication (sensitive: terminal access)
+    - domain: "nexterm.example.com"
+      policy: two_factor
+
+    # Cloud storage - require one-factor authentication
+    - domain: "cloud.example.com"
+      policy: one_factor
+
+    # Main domain - require one-factor authentication for all other paths
+    - domain: example.com
+      policy: one_factor
+
+###############################################################################
+# Session Configuration
+###############################################################################
+
+session:
+  # Session name (cookie name)
+  name: authelia_session
+
+  # CRITICAL: Domain for session cookie (use parent domain for SSO across subdomains)
+  # For example.com, subdomain1.example.com, subdomain2.example.com → use example.com
+  # This enables Single Sign-On across all subdomains
+  domain: example.com
+
+  # CRITICAL: Generate with `openssl rand -base64 64`
+  # Used to encrypt session cookies
+  secret: REPLACE_WITH_YOUR_SESSION_SECRET_GENERATED_WITH_OPENSSL_RAND_BASE64_64
+
+  # Session expiration (8 hours of inactivity)
+  expiration: 8h
+
+  # Inactivity timeout (2 hours without activity)
+  inactivity: 2h
+
+  # Remember me duration (1 month if user selects "Remember Me")
+  remember_me_duration: 1M
+
+###############################################################################
+# Regulation (Brute Force Protection)
+###############################################################################
+
+regulation:
+  # Maximum failed login attempts before ban
+  max_retries: 3
+
+  # How long to look back for failed attempts
+  find_time: 2m
+
+  # How long to ban the user after max_retries exceeded
+  ban_time: 5m
+
+###############################################################################
+# Storage Backend
+###############################################################################
+
+storage:
+  # CRITICAL: Generate with `openssl rand -base64 64`
+  # Used to encrypt sensitive data in the database (TOTP secrets, U2F keys, etc.)
+  encryption_key: REPLACE_WITH_YOUR_STORAGE_ENCRYPTION_KEY_GENERATED_WITH_OPENSSL_RAND_BASE64_64
+
+  # Local SQLite database (simple, suitable for small deployments)
+  local:
+    path: /config/db.sqlite3
+
+  # Alternative: PostgreSQL (for high-availability setups)
+  # postgres:
+  #   host: postgres
+  #   port: 5432
+  #   database: authelia
+  #   username: authelia
+  #   password: REPLACE_WITH_POSTGRES_PASSWORD
+
+  # Alternative: MySQL/MariaDB
+  # mysql:
+  #   host: mysql
+  #   port: 3306
+  #   database: authelia
+  #   username: authelia
+  #   password: REPLACE_WITH_MYSQL_PASSWORD
+
+###############################################################################
+# Notifier (Email Notifications)
+###############################################################################
+
+notifier:
+  # Disable email notifier by default (filesystem fallback)
+  # Email notifications are used for:
+  # - Password reset (if enabled)
+  # - 2FA device registration
+  # - Suspicious activity alerts
+
+  # Filesystem notifier (for development/testing)
+  filesystem:
+    filename: /config/notification.txt
+
+  # SMTP notifier (for production)
+  # Uncomment and configure to enable email notifications:
+  # smtp:
+  #   host: smtp.example.com
+  #   port: 587
+  #   username: noreply@example.com
+  #   password: REPLACE_WITH_SMTP_PASSWORD
+  #   sender: "Authelia <noreply@example.com>"
+  #   subject: "[Authelia] {title}"
+  #   startup_check_address: admin@example.com
+  #   disable_require_tls: false
+  #   disable_starttls: false
+  #   tls:
+  #     skip_verify: false
+  #     minimum_version: TLS1.2
+
+###############################################################################
+# Additional Notes
+###############################################################################
+
+# 1. Secret Generation:
+#    - All secrets MUST be generated with strong random values
+#    - Never reuse secrets across environments
+#    - Example: openssl rand -base64 64
+#
+# 2. Domain Configuration:
+#    - Replace ALL instances of "example.com" with your actual domain
+#    - session.domain should be the parent domain (e.g., example.com, not auth.example.com)
+#    - This enables SSO across all subdomains
+#
+# 3. Access Control:
+#    - Rules are evaluated in order (first match wins)
+#    - Use 'bypass' for public resources
+#    - Use 'one_factor' for basic authenticated access
+#    - Use 'two_factor' for sensitive resources (admin panels, terminals, etc.)
+#
+# 4. User Database:
+#    - Create users with: docker run --rm -it authelia/authelia:latest authelia hash-password 'YourPassword'
+#    - Add users to /config/users_database.yml
+#    - Example structure in docs/HOWTO-ADD-SERVICES.md
+#
+# 5. Testing:
+#    - Validate config: docker run --rm -v $(pwd):/config authelia/authelia:latest authelia validate-config /config/configuration.yml
+#    - Check logs: docker compose logs -f authelia
+#
+# 6. Production Hardening:
+#    - Enable SMTP notifications
+#    - Use PostgreSQL/MySQL for high-availability
+#    - Enable password reset (with SMTP)
+#    - Review and customize access control rules
+#    - Monitor logs for suspicious activity
+#
+# For full documentation: https://www.authelia.com/configuration/prologue/introduction/

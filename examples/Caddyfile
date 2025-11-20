@@ -1,0 +1,230 @@
+# Authelia Walled Garden - Caddy Reverse Proxy Configuration
+#
+# IMPORTANT: This is an EXAMPLE configuration.
+# Before deploying:
+# 1. Replace ALL instances of "example.com" with your actual domain
+# 2. Replace "admin@example.com" with your email (for Let's Encrypt notifications)
+# 3. Customize subdomain names as needed (xcal.example.com, etc.)
+# 4. Review authentication rules for your security requirements
+#
+# This configuration provides:
+# - Automatic HTTPS via Let's Encrypt
+# - Forward authentication to Authelia for all protected routes
+# - Multiple subdomains with shared SSO
+# - Example service integrations
+
+{
+    # Email for Let's Encrypt certificate notifications
+    # IMPORTANT: Replace with your actual email address
+    email admin@example.com
+}
+
+# Excalidraw - Collaborative whiteboard
+# Example subdomain configuration
+xcal.example.com {
+    encode gzip
+
+    # Require authentication via Authelia
+    forward_auth authelia:9091 {
+        uri /api/verify?rd=https://example.com/auth/
+        copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+    }
+
+    reverse_proxy excalidraw:80
+}
+
+# Excalidraw Storage Backend
+# Required for Excalidraw collaboration features
+xcal-storage.example.com {
+    encode gzip
+
+    forward_auth authelia:9091 {
+        uri /api/verify?rd=https://example.com/auth/
+        copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+    }
+
+    reverse_proxy excalidraw:80
+}
+
+# Excalidraw Collaboration Backend
+# WebSocket endpoint for real-time collaboration
+xcal-collab.example.com {
+    encode gzip
+
+    forward_auth authelia:9091 {
+        uri /api/verify?rd=https://example.com/auth/
+        copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+    }
+
+    reverse_proxy excalidraw:80
+}
+
+# Nexterm - Web-based terminal access
+# OPTIONAL: Remove if not deploying Nexterm
+nexterm.example.com {
+    encode gzip
+
+    # Require authentication via Authelia
+    forward_auth authelia:9091 {
+        uri /api/verify?rd=https://example.com/auth/
+        copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+    }
+
+    # Disable compression for terminal websockets
+    reverse_proxy nexterm:6989 {
+        transport http {
+            compression off
+        }
+    }
+}
+
+# OpenCloud - File storage and collaboration
+# OPTIONAL: Example of service with its own auth that still uses Authelia
+cloud.example.com {
+    encode gzip
+
+    # OpenCloud OIDC and authentication endpoints - NO Authelia auth required
+    # These paths need to be accessible for OpenCloud's internal authentication
+    @opencloud_auth {
+        path /.well-known/*
+        path /konnect/*
+        path /signin/*
+        path /oidc-callback.html
+    }
+    handle @opencloud_auth {
+        reverse_proxy opencloud:9200 {
+            transport http {
+                compression off
+            }
+        }
+    }
+
+    # All other OpenCloud paths require Authelia authentication
+    handle {
+        forward_auth authelia:9091 {
+            uri /api/verify?rd=https://example.com/auth/
+            copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+        }
+
+        reverse_proxy opencloud:9200 {
+            transport http {
+                compression off
+            }
+        }
+    }
+}
+
+# Main Application Domain
+# This is the primary domain hosting the dashboard and multiple services
+example.com {
+    encode gzip
+
+    # Authelia Portal - NO authentication required
+    # Users must be able to access /auth/ to log in
+    @authelia {
+        path /auth*              # Authelia login portal
+        path /static/*           # Authelia static assets
+        path /api/verify*        # Verification endpoint (used by Caddy)
+        path /api/authz/*        # Authorization API
+        path /locales/*          # Internationalization files
+    }
+    handle @authelia {
+        reverse_proxy authelia:9091
+    }
+
+    # All other paths require Authelia authentication
+    handle {
+        # Forward authentication check to Authelia
+        # If user is not authenticated, they will be redirected to /auth/
+        forward_auth authelia:9091 {
+            uri /api/verify?rd=https://example.com/auth/
+            copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+        }
+
+        # User Admin Interface
+        # Access control: Restrict to 'admins' group in Authelia config
+        handle /admin* {
+            reverse_proxy user-admin:5000
+        }
+
+        # User Admin API
+        # Access control: Restrict to 'admins' group in Authelia config
+        handle_path /api/admin/* {
+            reverse_proxy user-admin:5000
+        }
+
+        # DNS Tools API
+        # Available to all authenticated users
+        handle_path /api/dns/* {
+            reverse_proxy dns-tools:5001
+        }
+
+        # Portainer - Container management
+        # Accessed at: https://example.com/portainer/
+        handle /portainer* {
+            uri strip_prefix /portainer
+            reverse_proxy portainer:9000 {
+                transport http {
+                    compression off
+                }
+            }
+        }
+
+        # n8n - Workflow automation
+        # Accessed at: https://example.com/n8n/
+        handle_path /n8n/* {
+            reverse_proxy n8n:5678 {
+                transport http {
+                    compression off
+                }
+            }
+        }
+
+        # Cockpit - Server management
+        # OPTIONAL: Only if running Cockpit on host
+        # Accessed at: https://example.com/cockpit/
+        handle_path /cockpit/* {
+            # 172.17.0.1 is Docker's default gateway (host machine)
+            reverse_proxy 172.17.0.1:9090 {
+                header_up X-Forwarded-Proto {scheme}
+                header_up X-Forwarded-For {remote_host}
+                transport http {
+                    compression off
+                }
+            }
+        }
+
+        # Dashboard - Static files (index.html, etc.)
+        # This MUST be last so it doesn't override other routes
+        # Accessed at: https://example.com/
+        handle {
+            root * /srv
+            try_files {path} /index.html
+            file_server
+        }
+    }
+}
+
+# Additional Notes:
+#
+# 1. Subdomain Configuration:
+#    - Each subdomain gets its own server block
+#    - All subdomains use the same Authelia instance for SSO
+#    - Session cookies are domain-wide (set in Authelia config)
+#
+# 2. Authentication Flow:
+#    - User requests protected resource → Caddy checks with Authelia
+#    - Not authenticated → Redirect to https://example.com/auth/
+#    - User logs in → Authelia sets session cookie → Redirect back
+#    - Authenticated → Caddy adds Remote-User headers → Proxy to backend
+#
+# 3. Adding New Services:
+#    - Add service to docker-compose.yml (internal network only)
+#    - Add routing rule here (inside the 'handle' block)
+#    - Add access control rule in Authelia config (if needed)
+#    - Restart Caddy: docker compose restart caddy
+#
+# 4. Access Control:
+#    - Basic: All authenticated users can access
+#    - Advanced: Use Authelia's access_control rules for group-based restrictions
+#    - See: docs/HOWTO-ADD-SERVICES.md for examples

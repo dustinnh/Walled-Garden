@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Internal Dashboard – Walled Garden</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      }
+      h1 {
+        margin: 0 0 0.5rem 0;
+        color: #2d3748;
+        font-size: 2.2rem;
+      }
+      .intro {
+        color: #718096;
+        margin-bottom: 2.5rem;
+        font-size: 1.1rem;
+      }
+      .app-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1.5rem;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .app-card {
+        background: linear-gradient(135deg, #f6f8fb 0%, #ffffff 100%);
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+      .app-card.admin-only {
+        display: none;
+      }
+      .app-card.admin-only.show {
+        display: block;
+      }
+      .app-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+      }
+      .app-card:hover {
+        background: #ffffff;
+        border-color: #667eea;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+        transform: translateY(-4px);
+      }
+      .app-card:hover::before {
+        transform: scaleX(1);
+      }
+      .app-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+      }
+      .app-card a {
+        text-decoration: none;
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 1.2rem;
+        display: block;
+        margin-bottom: 0.5rem;
+      }
+      .app-card a:hover {
+        color: #667eea;
+      }
+      .app-description {
+        font-size: 0.9rem;
+        color: #718096;
+        margin: 0;
+      }
+      .footer {
+        margin-top: 3rem;
+        text-align: center;
+        color: #a0aec0;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🏠 Application Launcher</h1>
+      <p class="intro">Welcome to your authenticated workspace. Select a service to get started:</p>
+
+      <ul class="app-grid">
+        <li class="app-card">
+          <span class="app-icon">✏️</span>
+          <a href="https://xcal.example.com">Excalidraw</a>
+          <p class="app-description">Collaborative whiteboard for diagrams and drawings</p>
+        </li>
+
+        <li class="app-card">
+          <span class="app-icon">🐳</span>
+          <a href="/portainer/">Portainer</a>
+          <p class="app-description">Docker container management interface</p>
+        </li>
+
+        <li class="app-card">
+          <span class="app-icon">🔄</span>
+          <a href="/n8n/">n8n</a>
+          <p class="app-description">Workflow automation platform</p>
+        </li>
+
+        <li class="app-card">
+          <span class="app-icon">🔍</span>
+          <a href="/dns.html">DNS Tool Box</a>
+          <p class="app-description">Dig, trace, and troubleshoot DNS queries</p>
+        </li>
+
+        <li class="app-card">
+          <span class="app-icon">🖥️</span>
+          <a href="https://nexterm.example.com">Nexterm</a>
+          <p class="app-description">Server management via SSH, VNC & RDP</p>
+        </li>
+
+        <li class="app-card">
+          <span class="app-icon">☁️</span>
+          <a href="https://cloud.example.com">OpenCloud</a>
+          <p class="app-description">File storage, sharing and collaboration</p>
+        </li>
+
+        <li class="app-card">
+          <span class="app-icon">🛠️</span>
+          <a href="/cockpit/">Cockpit</a>
+          <p class="app-description">Server management and system monitoring</p>
+        </li>
+
+        <li class="app-card admin-only" id="adminCard">
+          <span class="app-icon">👤</span>
+          <a href="/admin">User Management</a>
+          <p class="app-description">Manage Authelia user accounts</p>
+        </li>
+      </ul>
+
+      <div class="footer">
+        <p>Secured with Authelia • Powered by Caddy</p>
+      </div>
+    </div>
+
+    <script>
+      // Check if current user is admin and show admin card
+      async function checkAdminAccess() {
+        try {
+          const response = await fetch('/api/admin/users');
+          if (response.ok) {
+            document.getElementById('adminCard').classList.add('show');
+          }
+        } catch (error) {
+          // Not an admin, card stays hidden
+        }
+      }
+
+      checkAdminAccess();
+    </script>
+  </body>
+</html>

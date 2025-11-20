@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>User Management - NYC App House</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+      }
+      h1 {
+        margin: 0;
+        color: #2d3748;
+        font-size: 2.2rem;
+      }
+      .back-link {
+        text-decoration: none;
+        color: #667eea;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border: 2px solid #667eea;
+        border-radius: 6px;
+        transition: all 0.3s;
+      }
+      .back-link:hover {
+        background: #667eea;
+        color: white;
+      }
+      h2 {
+        margin: 2rem 0 1rem 0;
+        color: #2d3748;
+        font-size: 1.5rem;
+      }
+      .add-user-form {
+        background: #f7fafc;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+      }
+      .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .form-group label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 0.25rem;
+      }
+      .form-group input, .form-group select {
+        padding: 0.5rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 4px;
+        font-size: 1rem;
+      }
+      .btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+      .btn-small {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+      }
+      .btn-danger {
+        background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+      }
+      .users-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+      }
+      .users-table th {
+        text-align: left;
+        padding: 0.75rem;
+        background: #edf2f7;
+        font-weight: 600;
+        color: #2d3748;
+        border-bottom: 2px solid #cbd5e0;
+      }
+      .users-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .users-table tr:hover {
+        background: #f7fafc;
+      }
+      .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background: #667eea;
+        color: white;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        margin-right: 0.25rem;
+      }
+      .message {
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+      }
+      .message.success {
+        background: #c6f6d5;
+        color: #22543d;
+      }
+      .message.error {
+        background: #fed7d7;
+        color: #742a2a;
+      }
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        color: #718096;
+      }
+      .unauthorized {
+        text-align: center;
+        padding: 3rem;
+      }
+      .unauthorized h2 {
+        color: #c53030;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>👤 User Management</h1>
+        <a href="/" class="back-link">← Back to Dashboard</a>
+      </div>
+
+      <div id="content">
+        <div class="loading">Checking permissions...</div>
+      </div>
+    </div>
+
+    <script>
+      console.log('Script starting...');
+      let isAdmin = false;
+
+      // Check if current user is admin
+      async function checkAdminAccess() {
+        console.log('Checking admin access...');
+        try {
+          const response = await fetch('/api/admin/users');
+          console.log('Fetch response:', response);
+          if (response.ok) {
+            console.log('User is admin, showing interface...');
+            isAdmin = true;
+            showAdminInterface();
+            loadUsers();
+          } else {
+            console.log('User is not admin');
+            showUnauthorized();
+          }
+        } catch (error) {
+          console.error('Error checking access:', error);
+          showUnauthorized();
+        }
+      }
+
+      function showUnauthorized() {
+        console.log('Showing unauthorized page');
+        const content = document.getElementById('content');
+        content.innerHTML = '<div class="unauthorized"><h2>Access Denied</h2><p>You do not have permission to access this page.</p><p>Only users in the "admins" group can manage users.</p><a href="/" class="btn" style="display: inline-block; margin-top: 1rem;">Return to Dashboard</a></div>';
+      }
+
+      function showAdminInterface() {
+        console.log('Showing admin interface');
+        const content = document.getElementById('content');
+        if (!content) {
+          console.error('Content div not found!');
+          return;
+        }
+        
+        content.innerHTML = '<div id="messageContainer"></div><div class="add-user-form"><h2 style="margin-top: 0; color: #2d3748;">Add New User</h2><form id="addUserForm"><div class="form-row"><div class="form-group"><label for="username">Username</label><input type="text" id="username" name="username" required pattern="[a-zA-Z0-9]+" title="Alphanumeric only"></div><div class="form-group"><label for="displayname">Display Name</label><input type="text" id="displayname" name="displayname" required></div></div><div class="form-row"><div class="form-group"><label for="email">Email</label><input type="email" id="email" name="email" required></div><div class="form-group"><label for="password">Password</label><input type="password" id="password" name="password" required minlength="8"></div></div><div class="form-row"><div class="form-group"><label for="groups">Groups</label><select id="groups" name="groups" multiple style="height: 80px;"><option value="users" selected>users</option><option value="admins">admins</option></select><small style="color: #718096;">Hold Ctrl/Cmd to select multiple</small></div></div><button type="submit" class="btn">Add User</button></form></div><h2>Existing Users</h2><table class="users-table"><thead><tr><th>Username</th><th>Display Name</th><th>Email</th><th>Groups</th><th>Actions</th></tr></thead><tbody id="usersTableBody"><tr><td colspan="5" style="text-align: center; color: #718096;">Loading...</td></tr></tbody></table>';
+
+        console.log('Admin interface HTML set');
+        
+        // Attach event listeners
+        const form = document.getElementById('addUserForm');
+        if (form) {
+          form.addEventListener('submit', handleAddUser);
+          console.log('Form event listener attached');
+        } else {
+          console.error('Could not find form!');
+        }
+      }
+
+      // Load users list
+      async function loadUsers() {
+        console.log('Loading users...');
+        try {
+          const response = await fetch('/api/admin/users');
+          if (!response.ok) throw new Error('Failed to load users');
+          
+          const data = await response.json();
+          console.log('Users data:', data);
+          const tbody = document.getElementById('usersTableBody');
+          
+          if (!tbody) {
+            console.error('usersTableBody not found!');
+            return;
+          }
+          
+          if (data.users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #718096;">No users found</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = data.users.map(user => '<tr><td><strong>' + user.username + '</strong></td><td>' + user.displayname + '</td><td>' + user.email + '</td><td>' + user.groups.map(g => '<span class="badge">' + g + '</span>').join('') + '</td><td><button class="btn btn-small btn-danger" onclick="deleteUser(\'' + user.username + '\')">Delete</button></td></tr>').join('');
+          
+          console.log('Users table populated');
+        } catch (error) {
+          console.error('Error loading users:', error);
+          showMessage('Failed to load users: ' + error.message, 'error');
+        }
+      }
+
+      // Add new user
+      async function handleAddUser(e) {
+        e.preventDefault();
+        console.log('Submitting new user form...');
+        
+        const formData = new FormData(e.target);
+        const selectedGroups = Array.from(document.getElementById('groups').selectedOptions).map(opt => opt.value);
+        
+        const userData = {
+          username: formData.get('username'),
+          displayname: formData.get('displayname'),
+          email: formData.get('email'),
+          password: formData.get('password'),
+          groups: selectedGroups
+        };
+
+        console.log('User data:', userData);
+
+        try {
+          const response = await fetch('/api/admin/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.error || 'Failed to create user');
+          }
+
+          showMessage('User ' + userData.username + ' created successfully!', 'success');
+          e.target.reset();
+          document.getElementById('groups').selectedIndex = 0;
+          loadUsers();
+        } catch (error) {
+          console.error('Error creating user:', error);
+          showMessage('Error: ' + error.message, 'error');
+        }
+      }
+
+      // Delete user
+      async function deleteUser(username) {
+        if (!confirm('Are you sure you want to delete user "' + username + '"?')) {
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/admin/users/' + username, {
+            method: 'DELETE'
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.error || 'Failed to delete user');
+          }
+
+          showMessage('User ' + username + ' deleted successfully!', 'success');
+          loadUsers();
+        } catch (error) {
+          console.error('Error deleting user:', error);
+          showMessage('Error: ' + error.message, 'error');
+        }
+      }
+
+      // Show message
+      function showMessage(text, type) {
+        const container = document.getElementById('messageContainer');
+        if (!container) {
+          console.error('messageContainer not found!');
+          return;
+        }
+        const message = document.createElement('div');
+        message.className = 'message ' + type;
+        message.textContent = text;
+        container.appendChild(message);
+
+        setTimeout(function() {
+          message.remove();
+        }, 5000);
+      }
+
+      // Initialize on page load
+      console.log('Initializing...');
+      checkAdminAccess();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,140 @@
+# Authelia Walled Garden - Docker Compose Configuration
+#
+# IMPORTANT: This is an EXAMPLE configuration with sanitized values.
+# Before deploying:
+# 1. Generate secrets with: ./scripts/generate-secrets.sh
+# 2. Replace example.com with your actual domain
+# 3. Configure environment variables (see .env.template)
+# 4. Review and customize service configurations
+#
+# This configuration has been tested in production but MUST be customized for your environment.
+
+version: "3.9"
+
+services:
+  # Caddy Reverse Proxy - Public entry point with automatic HTTPS
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"    # HTTP (redirects to HTTPS)
+      - "443:443"  # HTTPS
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro  # Reverse proxy configuration
+      - ./dashboard:/srv                      # Static dashboard files
+      - caddy_data:/data                      # Let's Encrypt certificates
+      - caddy_config:/config                  # Caddy configuration cache
+    networks:
+      - internal
+
+  # Authelia - Authentication and authorization server
+  authelia:
+    image: authelia/authelia:latest
+    container_name: authelia
+    restart: unless-stopped
+    volumes:
+      - ./authelia:/config  # Configuration, user database, sessions
+    environment:
+      - TZ=America/New_York  # Set to your timezone
+    networks:
+      - internal
+
+  # User Admin - Web interface for managing Authelia users
+  # See: https://github.com/yourusername/authelia-file-admin
+  user-admin:
+    build: ./user-admin  # Requires authelia-file-admin source code
+    container_name: user-admin
+    restart: unless-stopped
+    volumes:
+      - ./authelia:/config    # Shared with Authelia for user database access
+      - ./logs:/var/log       # Audit logs
+    environment:
+      # Security Keys (REQUIRED)
+      # Generate with: openssl rand -base64 32
+      - SECRET_KEY=${SECRET_KEY}                # Flask session encryption
+      - AUDIT_HMAC_KEY=${AUDIT_HMAC_KEY}        # Audit log signing key
+
+      # File Paths
+      - USERS_DB_PATH=/config/users_database.yml
+      - AUDIT_LOG_PATH=/var/log/authelia-admin-audit.jsonl
+
+      # Password Policy (customize as needed)
+      - PASSWORD_MIN_LENGTH=12
+      - PASSWORD_REQUIRE_UPPERCASE=true
+      - PASSWORD_REQUIRE_LOWERCASE=true
+      - PASSWORD_REQUIRE_DIGIT=true
+      - PASSWORD_REQUIRE_SPECIAL=true
+    networks:
+      - internal
+
+  # DNS Tools - Custom troubleshooting utilities
+  dns-tools:
+    build: ./dns-tools  # Requires dns-tools source code
+    container_name: dns-tools
+    restart: unless-stopped
+    networks:
+      - internal
+
+  # Excalidraw - Collaborative whiteboard (example service)
+  excalidraw:
+    image: excalidraw/excalidraw:latest
+    container_name: excalidraw
+    restart: unless-stopped
+    networks:
+      - internal  # No published ports - accessed via Caddy reverse proxy
+
+  # Portainer - Container management (example service)
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker API access
+      - portainer_data:/data
+    networks:
+      - internal
+
+  # n8n - Workflow automation (example service)
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    environment:
+      # IMPORTANT: Replace example.com with your actual domain
+      - N8N_HOST=example.com
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://example.com/n8n/
+      - N8N_PATH=/n8n/  # Subpath routing (accessed at /n8n/)
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - internal
+
+  # Nexterm - Web-based terminal (example service)
+  # OPTIONAL: Remove if not needed
+  nexterm:
+    image: germannewsmaker/nexterm:latest
+    container_name: nexterm
+    restart: unless-stopped
+    environment:
+      # Generate with: openssl rand -hex 32
+      - ENCRYPTION_KEY=${NEXTERM_ENCRYPTION_KEY}
+    volumes:
+      - nexterm_data:/app/data
+    networks:
+      - internal
+
+# Internal Docker network - no external access
+# Backend services are only accessible through Caddy reverse proxy
+networks:
+  internal:
+
+# Named volumes for persistent data
+volumes:
+  caddy_data:       # Let's Encrypt certificates
+  caddy_config:     # Caddy configuration
+  portainer_data:   # Portainer data
+  n8n_data:         # n8n workflows
+  nexterm_data:     # Nexterm sessions

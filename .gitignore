@@ -1,0 +1,220 @@
+# Authelia Walled Garden - .gitignore
+# Use this file as walledgarden-gh/.gitignore
+
+# ==========================================
+# SECRETS AND SENSITIVE DATA
+# ==========================================
+
+# Never commit production secrets
+*.secret
+*.key
+*.pem
+.env
+.env.*
+*.env
+
+# Passwords and credentials
+*password*
+*credentials*
+sudo-password.txt
+
+# API keys and tokens
+*api-key*
+*token*
+
+# ==========================================
+# PRODUCTION AUTHELIA DATA
+# ==========================================
+
+# If accidentally copied from production
+authelia/configuration.yml
+authelia/users_database.yml
+authelia/db.sqlite3
+authelia/*.log
+authelia/notification.txt
+
+# User data
+users_database.yml
+*.db
+*.sqlite
+*.sqlite3
+
+# ==========================================
+# LOGS AND RUNTIME DATA
+# ==========================================
+
+# Log files
+*.log
+logs/
+*.jsonl
+
+# Audit logs (contain sensitive user activity)
+*audit*.jsonl
+*audit*.log
+
+# Runtime data
+*.pid
+*.sock
+
+# ==========================================
+# DOCKER AND CONTAINERS
+# ==========================================
+
+# Docker volumes (if accidentally created locally)
+volumes/
+caddy_data/
+caddy_config/
+portainer_data/
+n8n_data/
+
+# Docker override files
+docker-compose.override.yml
+
+# ==========================================
+# NODE.JS
+# ==========================================
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ==========================================
+# PYTHON
+# ==========================================
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# ==========================================
+# IDEs AND EDITORS
+# ==========================================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+
+# Claude Code
+.claude/
+
+# Vim
+*.swp
+*.swo
+*~
+.vim
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ==========================================
+# OPERATING SYSTEM
+# ==========================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ==========================================
+# BACKUPS AND TEMPORARY FILES
+# ==========================================
+
+*.bak
+*.backup
+*.tmp
+*.temp
+*.old
+*.orig
+*.rej
+.cache/
+tmp/
+temp/
+
+# Compressed archives (usually backups)
+*.tar.gz
+*.tgz
+*.zip
+*.7z
+*.rar
+
+# ==========================================
+# PROJECT SPECIFIC
+# ==========================================
+
+# Screenshot source files (keep PNGs, exclude large sources)
+*.psd
+*.ai
+*.sketch
+*.fig
+
+# Local testing
+test-secrets/
+local-config/
+
+# Documentation builds (if using static site generator)
+docs/_build/
+docs/.doctrees/
+site/
+
+# ==========================================
+# KEEP THESE FILES
+# ==========================================
+
+# Even though named "template", keep them
+!.env.template
+!*-template.yml
+!*-example.yml
