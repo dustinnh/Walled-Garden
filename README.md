@@ -172,6 +172,33 @@ See [Architecture Documentation](docs/ARCHITECTURE.md) for detailed diagrams.
 
 See [Full Deployment Guide](docs/PDR.md) for comprehensive instructions.
 
+## Development Workflow
+
+If you're running this in production and want to develop safely:
+
+### Quick Workflow
+1. **Edit** in this git repository (`walledgarden-gh/`)
+2. **Commit** changes to git
+3. **Test** in staging environment
+4. **Deploy** to production with deployment script
+
+### Deployment Scripts
+- `scripts/deploy-staging.sh` - Deploy to staging for testing
+- `scripts/deploy-production.sh` - Deploy tested changes to production
+- `scripts/backup.sh` - Backup production before deployment
+
+### Keeping Production Safe
+- Git repository = source of truth (this directory)
+- Staging environment = test changes safely
+- Production = deploy only tested changes
+- Secrets = separate .env files (never in git)
+
+See [Development Workflow Guide](docs/DEVELOPMENT-WORKFLOW.md) for complete details on:
+- Setting up staging environment
+- Managing secrets across environments
+- Daily development workflow
+- Troubleshooting deployments
+
 ## Documentation
 
 ### Core Documentation
@@ -246,13 +273,58 @@ All example configurations are in the [`examples/`](examples/) directory:
 
 ## Related Projects
 
-### Companion Tools
+### User Management Component
 
-- **[authelia-file-admin](https://github.com/yourusername/authelia-file-admin)** - Web-based user management for file-based Authelia deployments
-  - Password breach detection
-  - Password expiration policies
-  - Email notifications
-  - HMAC-signed audit logging
+**[Authelia Admin Panel](https://github.com/dustinnh/Authelia-Admin-Panel)** - Production-ready web interface for managing file-based Authelia user accounts
+
+[![Version](https://img.shields.io/badge/version-1.10.0-green.svg)](https://github.com/dustinnh/Authelia-Admin-Panel/releases)
+[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/dustinnh/Authelia-Admin-Panel)
+
+**The only dedicated GUI administration tool for file-based Authelia deployments.**
+
+This walled garden **includes the Authelia Admin Panel** as the user management component (accessible at `/admin` endpoint). The admin panel provides:
+
+**Security Features**:
+- 🔒 Password breach detection via HaveIBeenPwned (600M+ breaches)
+- 🔒 Password history tracking (prevent reuse of last N passwords)
+- 🔒 Password expiration policies (configurable days)
+- 🔒 HMAC-signed audit logging with tamper detection
+- 🔒 Email notifications for security events
+
+**Management Features**:
+- 👤 Create, read, update, delete users via web interface
+- 👤 Group management and bulk CSV import/export
+- 👤 Real-time password validation with strength meter
+- 👤 Search, filter, and sort users
+- 👤 User statistics and password health dashboard
+
+**Production-Ready**:
+- ⚡ Gunicorn WSGI server (4 workers, production-grade)
+- ⚡ File locking for safe concurrent access
+- ⚡ CSRF protection and XSS prevention
+- ⚡ Rate limiting and security headers
+
+### Standalone Use
+
+**The Admin Panel can also be used independently** with your existing Authelia setup if you already have Authelia running with Nginx, Traefik, or another reverse proxy.
+
+See the [Admin Panel repository](https://github.com/dustinnh/Authelia-Admin-Panel) for standalone installation instructions.
+
+### How It's Integrated
+
+In this walled garden architecture, the admin panel is included in `examples/docker-compose.yml`:
+
+```yaml
+user-admin:
+  build: ./user-admin  # Clone Admin Panel repo here
+  container_name: user-admin
+  # ... configuration
+```
+
+To deploy:
+1. Clone the Admin Panel repository to `./user-admin/`
+2. Or use a pre-built Docker image (if available)
+3. Deploy with the deployment scripts provided
 
 ### Official Projects
 
@@ -280,12 +352,16 @@ Yes! The architecture is production-ready and battle-tested at run.nycapphouse.c
 - Understand what each component does
 - Implement proper backup and monitoring
 
-### What's the difference between this and authelia-file-admin?
+### What's the difference between this and Authelia Admin Panel?
 
-- **authelia-file-admin**: Single Flask application for managing Authelia users
-- **Walled Garden**: Complete architecture with Caddy + Authelia + multiple services
+- **[Authelia Admin Panel](https://github.com/dustinnh/Authelia-Admin-Panel)**: Standalone Flask application for managing Authelia users (can be used with any Authelia setup)
+- **Walled Garden**: Complete reference architecture with Caddy + Authelia + multiple services + documentation
 
-They complement each other - the walled garden uses authelia-file-admin as one of its components.
+They complement each other:
+- The **Admin Panel** is a software product that can be used independently
+- The **Walled Garden** is a complete architecture that includes the Admin Panel as one component
+- Use Admin Panel alone if you already have Authelia
+- Use Walled Garden for complete SSO gateway deployment from scratch
 
 ### How do I add a new service?
 
