@@ -54,11 +54,13 @@ This repository contains a **complete reference architecture** for deploying a s
 - **Backup & Recovery**: Documented procedures
 
 ### Developer-Friendly
+- **Pre-Built Images**: All custom components available on Docker Hub - no build required
 - **Clear Documentation**: Comprehensive guides and examples
 - **Example Services**: Pre-configured integrations (Excalidraw, Portainer, n8n, etc.)
 - **Custom Dashboard**: Application launcher with service cards
 - **DNS Tools**: Built-in troubleshooting utilities
 - **Modular Design**: Easy to add/remove services
+- **One-Command Deploy**: Clone and run `docker compose up -d`
 
 ## Architecture
 
@@ -118,6 +120,8 @@ See [Architecture Documentation](docs/ARCHITECTURE.md) for detailed diagrams.
 
 ## Quick Start
 
+**Everything included!** All components use pre-built Docker images - no separate repositories to clone, no build process required. Just configure and deploy.
+
 ### Prerequisites
 
 - Docker and Docker Compose installed
@@ -129,8 +133,8 @@ See [Architecture Documentation](docs/ARCHITECTURE.md) for detailed diagrams.
 
 1. **Clone this repository**:
    ```bash
-   git clone https://github.com/yourusername/authelia-walled-garden.git
-   cd authelia-walled-garden
+   git clone https://github.com/dustinnh/Walled-Garden.git
+   cd Walled-Garden/examples
    ```
 
 2. **Generate secrets**:
@@ -312,19 +316,21 @@ See the [Admin Panel repository](https://github.com/dustinnh/Authelia-Admin-Pane
 
 ### How It's Integrated
 
-In this walled garden architecture, the admin panel is included in `examples/docker-compose.yml`:
+In this walled garden architecture, the admin panel is included as a **pre-built Docker image** in `examples/docker-compose.yml`:
 
 ```yaml
 user-admin:
-  build: ./user-admin  # Clone Admin Panel repo here
+  image: dutdok4/authelia-admin:latest  # Pre-built image
   container_name: user-admin
   # ... configuration
 ```
 
-To deploy:
-1. Clone the Admin Panel repository to `./user-admin/`
-2. Or use a pre-built Docker image (if available)
-3. Deploy with the deployment scripts provided
+**No separate installation required!** The image is automatically pulled when you run `docker compose up -d`.
+
+To pin to a specific version (recommended for production):
+```yaml
+image: dutdok4/authelia-admin:1.10.0  # Pin to specific version
+```
 
 ### Official Projects
 

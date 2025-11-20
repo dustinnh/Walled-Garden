@@ -581,6 +581,49 @@ cd /home/dust/projects/walledgarden/walledgarden-gh
 
 ---
 
+## Updating the Admin Panel
+
+The Authelia Admin Panel runs as a **pre-built Docker image** (`dutdok4/authelia-admin:latest`) and doesn't require separate source code.
+
+### When New Admin Panel Versions Are Released
+
+**Updating to latest version**:
+```bash
+# Pull new image
+cd /opt/authelia-stack
+docker compose pull user-admin
+
+# Restart service
+docker compose up -d user-admin
+```
+
+**Pinning to specific version** (recommended for production):
+```yaml
+# In docker-compose.yml
+user-admin:
+  image: dutdok4/authelia-admin:1.10.0  # Pin to specific version
+```
+
+### For Maintainers: Building New Images
+
+If you need to build and publish a new version (maintainers only):
+
+```bash
+# Build from Admin Panel source
+cd /home/dust/projects/authelia-admin/authelia-file-admin
+docker build -t dutdok4/authelia-admin:1.11.0 -t dutdok4/authelia-admin:latest .
+
+# Push to Docker Hub
+docker push dutdok4/authelia-admin:1.11.0
+docker push dutdok4/authelia-admin:latest
+
+# Update git repo
+cd /home/dust/projects/walledgarden/walledgarden-gh
+# Update version in README.md and commit
+```
+
+---
+
 ## Summary
 
 **Recommended Workflow**:

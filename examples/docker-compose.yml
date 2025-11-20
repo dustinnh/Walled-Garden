@@ -41,9 +41,9 @@ services:
       - internal
 
   # User Admin - Web interface for managing Authelia users
-  # See: https://github.com/yourusername/authelia-file-admin
+  # See: https://github.com/dustinnh/Authelia-Admin-Panel
   user-admin:
-    build: ./user-admin  # Requires authelia-file-admin source code
+    image: dutdok4/authelia-admin:latest  # Pre-built image (use :1.10.0 to pin version)
     container_name: user-admin
     restart: unless-stopped
     volumes:
