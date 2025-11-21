@@ -1,0 +1,63 @@
+{
+  "id": "excalidraw",
+  "name": "Excalidraw",
+  "version": "1.0.0",
+  "description": "Collaborative virtual whiteboard for sketching diagrams",
+  "author": "Excalidraw",
+  "icon": "✏️",
+  "category": "productivity",
+  "type": "docker",
+  "tags": ["whiteboard", "drawing", "collaboration", "diagrams"],
+
+  "ui": {
+    "dashboard": {
+      "visible": true,
+      "requiresAdmin": false,
+      "order": 10
+    }
+  },
+
+  "routing": {
+    "type": "subdomain",
+    "subdomain": "xcal",
+    "additionalDomains": ["xcal-storage", "xcal-collab"]
+  },
+
+  "docker": {
+    "enabled": true,
+    "image": "excalidraw/excalidraw",
+    "tag": "latest",
+    "containerName": "excalidraw",
+    "internalPort": 80,
+    "environment": {},
+    "volumes": [],
+    "networks": ["internal"],
+    "dependencies": []
+  },
+
+  "authentication": {
+    "required": true,
+    "policy": "one_factor",
+    "bypassPaths": []
+  },
+
+  "storage": {
+    "persistent": false
+  },
+
+  "configuration": {
+    "settings": []
+  },
+
+  "requirements": {
+    "minVersion": "1.0.0",
+    "plugins": [],
+    "services": []
+  },
+
+  "links": {
+    "documentation": "https://docs.excalidraw.com/",
+    "homepage": "https://excalidraw.com/",
+    "repository": "https://github.com/excalidraw/excalidraw"
+  }
+}

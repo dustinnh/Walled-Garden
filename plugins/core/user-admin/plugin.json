@@ -1,0 +1,188 @@
+{
+  "id": "user-admin",
+  "name": "Authelia User Admin",
+  "version": "1.10.0",
+  "description": "Web interface for managing Authelia file-based user accounts",
+  "author": "Walled Garden Core",
+  "icon": "👤",
+  "category": "security",
+  "type": "hybrid",
+  "tags": ["authelia", "users", "admin", "security", "core"],
+
+  "ui": {
+    "dashboard": {
+      "visible": true,
+      "requiresAdmin": true,
+      "order": 2
+    },
+    "customPages": [
+      {
+        "path": "/admin",
+        "file": "ui/admin.html",
+        "requiresAdmin": true
+      }
+    ]
+  },
+
+  "routing": {
+    "type": "path",
+    "paths": ["/admin", "/admin.html"],
+    "stripPath": false
+  },
+
+  "docker": {
+    "enabled": true,
+    "image": "authelia-file-admin",
+    "tag": "latest",
+    "containerName": "authelia-file-admin",
+    "internalPort": 5000,
+    "environment": {
+      "USERS_DB_PATH": "/config/users_database.yml",
+      "AUDIT_LOG_PATH": "/var/log/authelia-admin-audit.jsonl",
+      "SECRET_KEY": "${USER_ADMIN_SECRET_KEY}",
+      "AUDIT_HMAC_KEY": "${USER_ADMIN_AUDIT_HMAC_KEY}",
+      "PASSWORD_MIN_LENGTH": "12",
+      "PASSWORD_REQUIRE_UPPERCASE": "true",
+      "PASSWORD_REQUIRE_LOWERCASE": "true",
+      "PASSWORD_REQUIRE_DIGIT": "true",
+      "PASSWORD_REQUIRE_SPECIAL": "true",
+      "PASSWORD_CHECK_BREACH": "true",
+      "PASSWORD_HISTORY_COUNT": "5",
+      "PASSWORD_EXPIRATION_DAYS": "0",
+      "EMAIL_ENABLED": "false"
+    },
+    "volumes": [
+      {
+        "type": "bind",
+        "source": "./authelia",
+        "target": "/config"
+      },
+      {
+        "type": "bind",
+        "source": "./logs",
+        "target": "/var/log"
+      }
+    ],
+    "networks": ["internal"],
+    "dependencies": [],
+    "healthcheck": {
+      "test": "curl -f http://localhost:5000/health || exit 1",
+      "interval": "30s",
+      "timeout": "10s",
+      "retries": 3
+    }
+  },
+
+  "authentication": {
+    "required": true,
+    "policy": "one_factor",
+    "requiredGroups": ["admins"],
+    "bypassPaths": ["/health"]
+  },
+
+  "api": {
+    "enabled": true,
+    "endpoints": [
+      {
+        "path": "/api/admin/users",
+        "methods": ["GET", "POST"],
+        "requiresAdmin": true
+      },
+      {
+        "path": "/api/admin/users/*",
+        "methods": ["GET", "PUT", "DELETE"],
+        "requiresAdmin": true
+      },
+      {
+        "path": "/api/admin/users/*/password",
+        "methods": ["PUT"],
+        "requiresAdmin": true
+      },
+      {
+        "path": "/api/admin/audit/verify",
+        "methods": ["GET"],
+        "requiresAdmin": true
+      },
+      {
+        "path": "/api/admin/stats",
+        "methods": ["GET"],
+        "requiresAdmin": true
+      },
+      {
+        "path": "/api/admin/users/export",
+        "methods": ["GET"],
+        "requiresAdmin": true
+      },
+      {
+        "path": "/api/admin/users/bulk/import",
+        "methods": ["POST"],
+        "requiresAdmin": true
+      },
+      {
+        "path": "/api/admin/csrf-token",
+        "methods": ["GET"],
+        "requiresAdmin": true
+      }
+    ]
+  },
+
+  "storage": {
+    "persistent": true,
+    "volumes": [
+      {
+        "name": "authelia_config",
+        "path": "/config"
+      },
+      {
+        "name": "admin_logs",
+        "path": "/var/log"
+      }
+    ]
+  },
+
+  "configuration": {
+    "settings": [
+      {
+        "key": "USER_ADMIN_SECRET_KEY",
+        "label": "Flask Secret Key",
+        "type": "password",
+        "required": true,
+        "description": "Secret key for Flask CSRF tokens (generate with: openssl rand -base64 32)"
+      },
+      {
+        "key": "USER_ADMIN_AUDIT_HMAC_KEY",
+        "label": "Audit HMAC Key",
+        "type": "password",
+        "required": true,
+        "description": "HMAC key for audit log signing (generate with: openssl rand -base64 32)"
+      },
+      {
+        "key": "PASSWORD_EXPIRATION_DAYS",
+        "label": "Password Expiration Days",
+        "type": "number",
+        "default": 0,
+        "required": false,
+        "description": "Days until password expires (0 = disabled)"
+      },
+      {
+        "key": "EMAIL_ENABLED",
+        "label": "Enable Email Notifications",
+        "type": "boolean",
+        "default": false,
+        "required": false,
+        "description": "Enable email notifications for user events"
+      }
+    ]
+  },
+
+  "requirements": {
+    "minVersion": "1.0.0",
+    "plugins": [],
+    "services": ["authelia"]
+  },
+
+  "links": {
+    "documentation": "https://github.com/yourusername/authelia-file-admin",
+    "repository": "https://github.com/yourusername/authelia-file-admin"
+  }
+}

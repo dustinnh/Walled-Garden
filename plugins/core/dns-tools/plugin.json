@@ -1,0 +1,103 @@
+{
+  "id": "dns-tools",
+  "name": "DNS Diagnostic Tools",
+  "version": "1.0.0",
+  "description": "Network diagnostic tools for DNS lookups, trace routes, and connectivity testing",
+  "author": "Walled Garden Core",
+  "icon": "🔍",
+  "category": "utilities",
+  "type": "hybrid",
+  "tags": ["dns", "network", "diagnostic", "core"],
+
+  "ui": {
+    "dashboard": {
+      "visible": true,
+      "requiresAdmin": false,
+      "order": 1
+    },
+    "customPages": [
+      {
+        "path": "/dns",
+        "file": "ui/dns.html",
+        "requiresAdmin": false
+      }
+    ]
+  },
+
+  "routing": {
+    "type": "path",
+    "paths": ["/dns", "/dns.html"],
+    "stripPath": false
+  },
+
+  "docker": {
+    "enabled": false
+  },
+
+  "authentication": {
+    "required": true,
+    "policy": "one_factor",
+    "bypassPaths": []
+  },
+
+  "api": {
+    "enabled": true,
+    "endpoints": [
+      {
+        "path": "/api/dns/lookup",
+        "file": "api/dns-handler.py",
+        "methods": ["POST"],
+        "requiresAdmin": false
+      },
+      {
+        "path": "/api/dns/trace",
+        "file": "api/dns-handler.py",
+        "methods": ["POST"],
+        "requiresAdmin": false
+      },
+      {
+        "path": "/api/dns/ping",
+        "file": "api/dns-handler.py",
+        "methods": ["POST"],
+        "requiresAdmin": false
+      },
+      {
+        "path": "/api/dns/whois",
+        "file": "api/dns-handler.py",
+        "methods": ["POST"],
+        "requiresAdmin": false
+      },
+      {
+        "path": "/api/dns/headers",
+        "file": "api/dns-handler.py",
+        "methods": ["POST"],
+        "requiresAdmin": false
+      },
+      {
+        "path": "/api/dns/ssl",
+        "file": "api/dns-handler.py",
+        "methods": ["POST"],
+        "requiresAdmin": false
+      }
+    ]
+  },
+
+  "storage": {
+    "persistent": false
+  },
+
+  "configuration": {
+    "settings": []
+  },
+
+  "requirements": {
+    "minVersion": "1.0.0",
+    "plugins": [],
+    "services": []
+  },
+
+  "links": {
+    "documentation": "/docs/dns-tools.md",
+    "repository": "https://github.com/yourusername/walledgarden"
+  }
+}

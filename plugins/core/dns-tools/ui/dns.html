@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DNS Tool Box - NYC App House</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+      }
+      h1 {
+        margin: 0;
+        color: #2d3748;
+        font-size: 2.2rem;
+      }
+      .back-link {
+        text-decoration: none;
+        color: #667eea;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border: 2px solid #667eea;
+        border-radius: 6px;
+        transition: all 0.3s;
+      }
+      .back-link:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      /* Tabs */
+      .tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #e2e8f0;
+      }
+      .tab {
+        background: transparent;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #718096;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+      }
+      .tab:hover {
+        color: #667eea;
+      }
+      .tab.active {
+        color: #667eea;
+        border-bottom-color: #667eea;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+
+      .dns-form {
+        background: #f7fafc;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+      }
+      .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .form-group label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 0.5rem;
+      }
+      .form-group input, .form-group select {
+        padding: 0.5rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 4px;
+        font-size: 1rem;
+      }
+      .form-group input[type="range"] {
+        padding: 0;
+      }
+      .range-value {
+        display: inline-block;
+        margin-left: 0.5rem;
+        font-weight: 600;
+        color: #667eea;
+      }
+      .options-group {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+      }
+      .options-group h3 {
+        margin: 0 0 0.75rem 0;
+        color: #4a5568;
+        font-size: 1rem;
+      }
+      .checkbox-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.75rem;
+      }
+      .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .checkbox-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+      .checkbox-item label {
+        cursor: pointer;
+        color: #2d3748;
+        font-size: 0.9rem;
+      }
+      .btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .message {
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+      }
+      .message.success {
+        background: #c6f6d5;
+        color: #22543d;
+      }
+      .message.error {
+        background: #fed7d7;
+        color: #742a2a;
+      }
+      .message.info {
+        background: #bee3f8;
+        color: #2c5282;
+      }
+      .presets {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+      }
+      .preset-btn {
+        background: white;
+        border: 2px solid #667eea;
+        color: #667eea;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .preset-btn:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      /* Terminal History */
+      .terminal-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        min-height: 400px;
+        background: #1a202c;
+        border: 3px solid #667eea;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        overflow: hidden;
+      }
+      .terminal-header {
+        background: #2d3748;
+        padding: 0.75rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #4a5568;
+      }
+      .terminal-header h3 {
+        margin: 0;
+        color: #68d391;
+        font-family: 'Courier New', monospace;
+        font-size: 1rem;
+      }
+      .terminal-controls {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .terminal-btn {
+        background: transparent;
+        border: 1px solid #68d391;
+        color: #68d391;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .terminal-btn:hover {
+        background: #68d391;
+        color: #1a202c;
+      }
+      .terminal-output {
+        min-height: 350px;
+        max-height: 600px;
+        overflow-y: auto;
+        padding: 1rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        color: #e2e8f0;
+      }
+      .terminal-entry {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #2d3748;
+      }
+      .terminal-entry:last-child {
+        border-bottom: none;
+      }
+      .terminal-timestamp {
+        color: #68d391;
+        font-size: 0.8rem;
+        margin-bottom: 0.25rem;
+      }
+      .terminal-command {
+        color: #fbd38d;
+        margin-bottom: 0.5rem;
+      }
+      .terminal-result {
+        color: #e2e8f0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      .terminal-error {
+        color: #fc8181;
+      }
+      .terminal-output::-webkit-scrollbar {
+        width: 8px;
+      }
+      .terminal-output::-webkit-scrollbar-track {
+        background: #2d3748;
+      }
+      .terminal-output::-webkit-scrollbar-thumb {
+        background: #4a5568;
+        border-radius: 4px;
+      }
+      .terminal-output::-webkit-scrollbar-thumb:hover {
+        background: #667eea;
+      }
+      .terminal-empty {
+        color: #718096;
+        font-style: italic;
+        text-align: center;
+        padding: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🔍 DNS Tool Box</h1>
+        <a href="/" class="back-link">← Back to Dashboard</a>
+      </div>
+
+      <div id="messageContainer"></div>
+
+      <!-- Preset Buttons -->
+      <div class="presets">
+        <button class="preset-btn" onclick="loadPreset('basicA')">Basic A Record</button>
+        <button class="preset-btn" onclick="loadPreset('mx')">Check Mail (MX)</button>
+        <button class="preset-btn" onclick="loadPreset('trace')">Trace Path</button>
+        <button class="preset-btn" onclick="loadPreset('reverse')">Reverse Lookup</button>
+        <button class="preset-btn" onclick="loadPreset('ns')">Name Servers</button>
+        <button class="preset-btn" onclick="loadPreset('txt')">TXT Records</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('basic')">Basic</button>
+        <button class="tab" onclick="switchTab('debug')">Debug</button>
+        <button class="tab" onclick="switchTab('advanced')">Advanced</button>
+      </div>
+
+      <form id="digForm" class="dns-form">
+        <!-- Basic Tab -->
+        <div id="tab-basic" class="tab-content active">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="domain">Domain or IP Address</label>
+              <input type="text" id="domain" name="domain" placeholder="example.com or 8.8.8.8" required>
+            </div>
+            <div class="form-group">
+              <label for="dnsServer">DNS Server</label>
+              <select id="dnsServer" name="dnsServer">
+                <option value="default">System Default</option>
+                <option value="8.8.8.8">Google (8.8.8.8)</option>
+                <option value="1.1.1.1">Cloudflare (1.1.1.1)</option>
+                <option value="9.9.9.9">Quad9 (9.9.9.9)</option>
+                <option value="208.67.222.222">OpenDNS (208.67.222.222)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="options-group">
+            <h3>Record Types (select multiple)</h3>
+            <div class="checkbox-grid">
+              <div class="checkbox-item">
+                <input type="checkbox" id="type-A" name="recordType" value="A" checked>
+                <label for="type-A">A (IPv4 Address)</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="type-AAAA" name="recordType" value="AAAA">
+                <label for="type-AAAA">AAAA (IPv6 Address)</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="type-MX" name="recordType" value="MX">
+                <label for="type-MX">MX (Mail Exchange)</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="type-CNAME" name="recordType" value="CNAME">
+                <label for="type-CNAME">CNAME (Canonical Name)</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="type-TXT" name="recordType" value="TXT">
+                <label for="type-TXT">TXT (Text Records)</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="type-NS" name="recordType" value="NS">
+                <label for="type-NS">NS (Name Servers)</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="type-SOA" name="recordType" value="SOA">
+                <label for="type-SOA">SOA (Start of Authority)</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="type-PTR" name="recordType" value="PTR">
+                <label for="type-PTR">PTR (Pointer/Reverse)</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="type-ANY" name="recordType" value="ANY">
+                <label for="type-ANY">ANY (All Records)</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Debug Tab -->
+        <div id="tab-debug" class="tab-content">
+          <div class="options-group">
+            <h3>Query Options</h3>
+            <div class="checkbox-grid">
+              <div class="checkbox-item">
+                <input type="checkbox" id="trace" name="trace">
+                <label for="trace">Trace Resolution Path (+trace)</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="tcp" name="tcp">
+                <label for="tcp">Use TCP instead of UDP</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="norecurse" name="norecurse">
+                <label for="norecurse">No Recursion (+norecurse)</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="reverse" name="reverse">
+                <label for="reverse">Reverse Lookup (-x)</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="options-group">
+            <h3>Output Options</h3>
+            <div class="checkbox-grid">
+              <div class="checkbox-item">
+                <input type="checkbox" id="short" name="short">
+                <label for="short">Short Output (+short)</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="stats" name="stats">
+                <label for="stats">Show Query Stats (+stats)</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="answerOnly" name="answerOnly">
+                <label for="answerOnly">Answer Section Only</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="showAuthority" name="showAuthority">
+                <label for="showAuthority">Include Authority Section</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced Tab -->
+        <div id="tab-advanced" class="tab-content">
+          <div class="options-group">
+            <h3>DNSSEC</h3>
+            <div class="checkbox-grid">
+              <div class="checkbox-item">
+                <input type="checkbox" id="dnssec" name="dnssec">
+                <label for="dnssec">Request DNSSEC Records (+dnssec)</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="options-group">
+            <h3>EDNS & Performance Tuning</h3>
+            <div class="form-group">
+              <label for="bufsize">
+                EDNS Buffer Size: <span class="range-value" id="bufsizeValue">1232</span> bytes
+              </label>
+              <input type="range" id="bufsize" name="bufsize" min="512" max="4096" value="1232" step="128" oninput="updateRangeValue('bufsize')">
+            </div>
+            <div class="form-row" style="margin-top: 1rem;">
+              <div class="form-group">
+                <label for="timeout">Timeout (seconds)</label>
+                <input type="number" id="timeout" name="timeout" min="1" max="30" value="10">
+              </div>
+              <div class="form-group">
+                <label for="tries">Retries</label>
+                <input type="number" id="tries" name="tries" min="1" max="3" value="2">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn" id="runBtn">Run Query</button>
+      </form>
+    </div>
+
+    <!-- Terminal History -->
+    <div class="terminal-container">
+      <div class="terminal-header">
+        <h3>⚡ Command History</h3>
+        <div class="terminal-controls">
+          <button class="terminal-btn" onclick="clearHistory()">Clear</button>
+          <button class="terminal-btn" onclick="scrollToBottom()">↓ Bottom</button>
+        </div>
+      </div>
+      <div class="terminal-output" id="terminalOutput">
+        <div class="terminal-empty">No commands executed yet. Run a query to see results here.</div>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById('digForm');
+      const runBtn = document.getElementById('runBtn');
+      const terminalOutput = document.getElementById('terminalOutput');
+      let commandHistory = [];
+
+      // Tab switching
+      function switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        event.target.classList.add('active');
+
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        document.getElementById('tab-' + tabName).classList.add('active');
+      }
+
+      // Range value display
+      function updateRangeValue(name) {
+        const input = document.getElementById(name);
+        const display = document.getElementById(name + 'Value');
+        display.textContent = input.value;
+      }
+
+      // Preset configurations
+      const presets = {
+        basicA: { domain: 'google.com', recordTypes: ['A'], dnsServer: 'default', short: true },
+        mx: { domain: 'gmail.com', recordTypes: ['MX'], dnsServer: 'default', short: false },
+        trace: { domain: 'example.com', recordTypes: ['A'], dnsServer: 'default', trace: true },
+        reverse: { domain: '8.8.8.8', recordTypes: ['PTR'], dnsServer: 'default', reverse: true },
+        ns: { domain: 'google.com', recordTypes: ['NS'], dnsServer: 'default', short: false },
+        txt: { domain: 'google.com', recordTypes: ['TXT'], dnsServer: 'default', short: false }
+      };
+
+      function loadPreset(presetName) {
+        const preset = presets[presetName];
+        if (!preset) return;
+
+        // Reset all checkboxes
+        document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+        // Set form values
+        document.getElementById('domain').value = preset.domain || '';
+        document.getElementById('dnsServer').value = preset.dnsServer || 'default';
+
+        // Set record types
+        if (preset.recordTypes) {
+          preset.recordTypes.forEach(type => {
+            const checkbox = document.getElementById('type-' + type);
+            if (checkbox) checkbox.checked = true;
+          });
+        }
+
+        // Set other checkboxes
+        Object.keys(preset).forEach(key => {
+          if (typeof preset[key] === 'boolean' && preset[key]) {
+            const checkbox = document.getElementById(key);
+            if (checkbox) checkbox.checked = true;
+          }
+        });
+      }
+
+      // Get selected record types
+      function getSelectedRecordTypes() {
+        const checkboxes = document.querySelectorAll('input[name="recordType"]:checked');
+        const types = Array.from(checkboxes).map(cb => cb.value);
+        return types.length > 0 ? types : ['A']; // Default to A if none selected
+      }
+
+      // Form submission
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const params = {
+          domain: formData.get('domain'),
+          recordTypes: getSelectedRecordTypes(),
+          server: formData.get('dnsServer'),
+          short: document.getElementById('short').checked,
+          trace: document.getElementById('trace').checked,
+          tcp: document.getElementById('tcp').checked,
+          norecurse: document.getElementById('norecurse').checked,
+          stats: document.getElementById('stats').checked,
+          dnssec: document.getElementById('dnssec').checked,
+          reverse: document.getElementById('reverse').checked,
+          answerOnly: document.getElementById('answerOnly').checked,
+          showAuthority: document.getElementById('showAuthority').checked,
+          bufsize: parseInt(document.getElementById('bufsize').value),
+          timeout: parseInt(document.getElementById('timeout').value),
+          tries: parseInt(document.getElementById('tries').value)
+        };
+
+        runBtn.disabled = true;
+        runBtn.textContent = 'Running...';
+
+        try {
+          const response = await fetch('/api/dns/dig', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params)
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.error || 'Query failed');
+          }
+
+          // Add to history
+          addToHistory(result.command, result.output, result.error, result.returncode === 0);
+
+          if (result.error && result.error.trim()) {
+            showMessage('Query completed with warnings. Check terminal history below.', 'info');
+          } else {
+            showMessage('Query completed successfully!', 'success');
+          }
+
+        } catch (error) {
+          showMessage('Error: ' + error.message, 'error');
+          addToHistory('Failed query', error.message, null, false);
+        } finally {
+          runBtn.disabled = false;
+          runBtn.textContent = 'Run Query';
+        }
+      });
+
+      // Add entry to terminal history
+      function addToHistory(command, output, error, success) {
+        const timestamp = new Date().toLocaleString();
+        const entry = { timestamp, command, output, error, success };
+        commandHistory.push(entry);
+
+        // Remove empty state message if present
+        const emptyMsg = terminalOutput.querySelector('.terminal-empty');
+        if (emptyMsg) {
+          emptyMsg.remove();
+        }
+
+        // Create entry element
+        const entryDiv = document.createElement('div');
+        entryDiv.className = 'terminal-entry';
+
+        const timestampDiv = document.createElement('div');
+        timestampDiv.className = 'terminal-timestamp';
+        timestampDiv.textContent = `[${timestamp}]`;
+
+        const commandDiv = document.createElement('div');
+        commandDiv.className = 'terminal-command';
+        commandDiv.textContent = '$ ' + command;
+
+        const resultDiv = document.createElement('div');
+        resultDiv.className = success ? 'terminal-result' : 'terminal-error';
+        resultDiv.textContent = output || error || 'No output';
+
+        entryDiv.appendChild(timestampDiv);
+        entryDiv.appendChild(commandDiv);
+        entryDiv.appendChild(resultDiv);
+
+        terminalOutput.appendChild(entryDiv);
+        scrollToBottom();
+      }
+
+      // Clear history
+      function clearHistory() {
+        commandHistory = [];
+        terminalOutput.innerHTML = '<div class="terminal-empty">No commands executed yet. Run a query to see results here.</div>';
+      }
+
+      // Scroll to bottom of terminal
+      function scrollToBottom() {
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+      }
+
+      // Show message
+      function showMessage(text, type) {
+        const container = document.getElementById('messageContainer');
+        const message = document.createElement('div');
+        message.className = 'message ' + type;
+        message.textContent = text;
+        container.appendChild(message);
+
+        setTimeout(() => {
+          message.remove();
+        }, 5000);
+      }
+    </script>
+  </body>
+</html>

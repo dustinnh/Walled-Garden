@@ -1,0 +1,108 @@
+{
+  "id": "open-webui",
+  "name": "Open WebUI",
+  "version": "1.0.0",
+  "description": "User-friendly WebUI for LLMs (Formerly Ollama WebUI)",
+  "author": "Open WebUI",
+  "icon": "🤖",
+  "category": "productivity",
+  "type": "docker",
+  "tags": ["ai", "llm", "chat", "ollama", "openai"],
+
+  "ui": {
+    "dashboard": {
+      "visible": true,
+      "requiresAdmin": false,
+      "order": 60
+    }
+  },
+
+  "routing": {
+    "type": "subdomain",
+    "subdomain": "chat"
+  },
+
+  "docker": {
+    "enabled": true,
+    "image": "ghcr.io/open-webui/open-webui",
+    "tag": "main",
+    "containerName": "open-webui",
+    "internalPort": 8080,
+    "environment": {
+      "OLLAMA_API_BASE_URL": "${OLLAMA_URL}",
+      "WEBUI_SECRET_KEY": "${WEBUI_SECRET_KEY}",
+      "SCARF_NO_ANALYTICS": "true",
+      "ANONYMIZED_TELEMETRY": "False"
+    },
+    "volumes": [
+      {
+        "type": "named",
+        "source": "open_webui_data",
+        "target": "/app/backend/data"
+      }
+    ],
+    "networks": ["internal"],
+    "dependencies": [],
+    "healthcheck": {
+      "test": "curl -f http://localhost:8080/health || exit 1",
+      "interval": "30s",
+      "timeout": "10s",
+      "retries": 3
+    },
+    "resources": {
+      "limits": {
+        "memory": "1G",
+        "cpus": "1"
+      }
+    }
+  },
+
+  "authentication": {
+    "required": true,
+    "policy": "one_factor",
+    "bypassPaths": ["/api/v1", "/ollama/api", "/openai/v1"]
+  },
+
+  "storage": {
+    "persistent": true,
+    "volumes": [
+      {
+        "name": "open_webui_data",
+        "path": "/app/backend/data",
+        "size": "10Gi"
+      }
+    ]
+  },
+
+  "configuration": {
+    "settings": [
+      {
+        "key": "OLLAMA_URL",
+        "label": "Ollama API URL",
+        "type": "string",
+        "default": "http://ollama:11434/api",
+        "required": false,
+        "description": "URL to Ollama API (if using Ollama backend)"
+      },
+      {
+        "key": "WEBUI_SECRET_KEY",
+        "label": "WebUI Secret Key",
+        "type": "password",
+        "required": true,
+        "description": "Secret key for session management (generate with: openssl rand -hex 32)"
+      }
+    ]
+  },
+
+  "requirements": {
+    "minVersion": "1.0.0",
+    "plugins": [],
+    "services": []
+  },
+
+  "links": {
+    "documentation": "https://docs.openwebui.com/",
+    "homepage": "https://openwebui.com/",
+    "repository": "https://github.com/open-webui/open-webui"
+  }
+}

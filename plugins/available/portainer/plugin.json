@@ -1,0 +1,95 @@
+{
+  "id": "portainer",
+  "name": "Portainer CE",
+  "version": "1.0.0",
+  "description": "Docker container management platform",
+  "author": "Portainer",
+  "icon": "🐳",
+  "category": "development",
+  "type": "docker",
+  "tags": ["docker", "containers", "management", "admin"],
+
+  "ui": {
+    "dashboard": {
+      "visible": true,
+      "requiresAdmin": true,
+      "order": 20
+    }
+  },
+
+  "routing": {
+    "type": "path",
+    "path": "/portainer",
+    "stripPath": false
+  },
+
+  "docker": {
+    "enabled": true,
+    "image": "portainer/portainer-ce",
+    "tag": "latest",
+    "containerName": "portainer",
+    "internalPort": 9000,
+    "environment": {},
+    "volumes": [
+      {
+        "type": "named",
+        "source": "portainer_data",
+        "target": "/data"
+      },
+      {
+        "type": "bind",
+        "source": "/var/run/docker.sock",
+        "target": "/var/run/docker.sock",
+        "readOnly": false
+      }
+    ],
+    "networks": ["internal"],
+    "dependencies": [],
+    "healthcheck": {
+      "test": "wget --no-verbose --tries=1 --spider http://localhost:9000 || exit 1",
+      "interval": "30s",
+      "timeout": "10s",
+      "retries": 3
+    },
+    "resources": {
+      "limits": {
+        "memory": "500M",
+        "cpus": "0.5"
+      }
+    }
+  },
+
+  "authentication": {
+    "required": true,
+    "policy": "two_factor",
+    "requiredGroups": ["admins"],
+    "bypassPaths": ["/api/websocket"]
+  },
+
+  "storage": {
+    "persistent": true,
+    "volumes": [
+      {
+        "name": "portainer_data",
+        "path": "/data",
+        "size": "1Gi"
+      }
+    ]
+  },
+
+  "configuration": {
+    "settings": []
+  },
+
+  "requirements": {
+    "minVersion": "1.0.0",
+    "plugins": [],
+    "services": ["docker"]
+  },
+
+  "links": {
+    "documentation": "https://docs.portainer.io/",
+    "homepage": "https://www.portainer.io/",
+    "repository": "https://github.com/portainer/portainer"
+  }
+}

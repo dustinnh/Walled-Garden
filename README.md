@@ -1,10 +1,20 @@
-# Authelia Walled Garden - Reference Architecture
+# Authelia Walled Garden - Modular Plugin Architecture
 
-Production-ready reference architecture for deploying an Authelia-based authentication gateway with Caddy reverse proxy.
+Production-ready reference architecture for deploying an Authelia-based authentication gateway with a **modular plugin system** for easy service management.
 
-**Version**: 1.0.0
-**Status**: Production-Ready Reference Implementation
+**Version**: 2.0.0
+**Status**: Production-Ready with Plugin System
 **License**: MIT
+
+## 🚀 What's New in 2.0
+
+The Walled Garden now features a **complete plugin architecture** that transforms how you manage services:
+
+- **📦 Modular Plugins**: Add/remove services without editing core files
+- **🔧 Plugin Manager CLI**: Simple commands to enable/disable services
+- **🏗️ Automatic Configuration**: Generate Docker Compose, Caddyfile, and dashboard from plugins
+- **🎨 Custom Plugins**: Easy framework for adding your own services
+- **⚡ Zero Downtime**: Hot-reload services without full restart
 
 ## What This Is
 
@@ -12,7 +22,8 @@ This repository contains a **complete reference architecture** for deploying a s
 - **Authelia** - Authentication and authorization server
 - **Caddy** - Reverse proxy with automatic HTTPS
 - **Docker Compose** - Service orchestration
-- **Multiple backend services** - Example integrations
+- **Plugin System** - Modular service management
+- **Multiple backend services** - Pre-built plugin library
 
 **This is NOT** a software package or turnkey solution. It's a comprehensive guide and example implementation designed to be cloned, studied, and customized for your specific needs.
 
@@ -21,16 +32,18 @@ This repository contains a **complete reference architecture** for deploying a s
 - DevOps engineers building authenticated service platforms
 - Security engineers implementing SSO
 - Homelab enthusiasts protecting self-hosted services
+- Teams needing flexible service management
 
 ## Table of Contents
 
 - [Features](#features)
 - [Architecture](#architecture)
+- [Plugin System](#plugin-system)
 - [Quick Start](#quick-start)
 - [Documentation](#documentation)
-- [Examples](#examples)
+- [Available Plugins](#available-plugins)
+- [Creating Custom Plugins](#creating-custom-plugins)
 - [Screenshots](#screenshots)
-- [Related Projects](#related-projects)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -45,440 +58,352 @@ This repository contains a **complete reference architecture** for deploying a s
 - **Password Breach Detection**: HaveIBeenPwned integration
 - **Audit Logging**: HMAC-signed audit trail
 
+### Modular Plugin System
+- **Plug-and-Play Services**: Enable/disable services with one command
+- **Auto-Configuration**: Generates all config files from plugin manifests
+- **Plugin Types**: Docker, API, Static, External, Hybrid
+- **Plugin Manager CLI**: Simple interface for plugin management
+- **Custom Plugins**: Easy framework for adding your own services
+- **Version Management**: Each plugin independently versioned
+- **Dependency Resolution**: Automatic handling of plugin dependencies
+
 ### Production-Ready Components
 - **Reverse Proxy**: Caddy with automatic certificate management
 - **Authentication Gateway**: Authelia with file-based or LDAP backends
-- **User Management**: Web-based admin interface (authelia-file-admin)
+- **User Management**: Web-based admin interface (core plugin)
+- **DNS Tools**: Network diagnostic utilities (core plugin)
 - **Service Discovery**: Dynamic routing configuration
 - **Health Monitoring**: Container health checks
 - **Backup & Recovery**: Documented procedures
 
-### Developer-Friendly
-- **Pre-Built Images**: All custom components available on Docker Hub - no build required
-- **Clear Documentation**: Comprehensive guides and examples
-- **Example Services**: Pre-configured integrations (Excalidraw, Portainer, n8n, etc.)
-- **Custom Dashboard**: Application launcher with service cards
-- **DNS Tools**: Built-in troubleshooting utilities
-- **Modular Design**: Easy to add/remove services
-- **One-Command Deploy**: Clone and run `docker compose up -d`
-
 ## Architecture
 
-### High-Level Overview
+### Plugin-Based Architecture
 
 ```
-Internet
-  │
-  ↓
-[Caddy Reverse Proxy :443]
-  │
-  ↓
-[Authelia :9091] ← Authentication Check
-  │
-  ├─ Not Authenticated → Redirect to /auth/
-  │
-  └─ Authenticated → Forward to Backend
-                        │
-                        ↓
-              [Internal Docker Network]
-                        │
-        ┌───────────────┼───────────────┐
-        │               │               │
-    [Service 1]    [Service 2]    [Service 3]
+┌─────────────────────────────────────────┐
+│           Plugin System                 │
+├─────────────────────────────────────────┤
+│  Core Plugins (Always Enabled)          │
+│  ├─ DNS Tools                           │
+│  └─ User Admin                          │
+├─────────────────────────────────────────┤
+│  Available Plugins (Optional)           │
+│  ├─ Excalidraw                          │
+│  ├─ Portainer                           │
+│  ├─ n8n Automation                      │
+│  ├─ IT Tools                            │
+│  └─ ... (20+ more)                      │
+├─────────────────────────────────────────┤
+│  Custom Plugins (User Created)          │
+│  └─ Your Services Here                  │
+└─────────────────────────────────────────┘
+              ↓
+         Build System
+              ↓
+    ┌──────────────────┐
+    │ Generated Files  │
+    ├──────────────────┤
+    │ • index.html     │
+    │ • docker-compose │
+    │ • Caddyfile      │
+    │ • .env template  │
+    └──────────────────┘
 ```
 
 ### Authentication Flow
 
 1. User requests `https://example.com/service/`
 2. Caddy performs `forward_auth` check to Authelia
-3. Authelia checks session cookie
-4. If not authenticated → redirect to `https://example.com/auth/`
-5. User logs in with username + password (+ optional 2FA)
-6. Authelia sets session cookie (domain-wide)
-7. User redirected back to original service
-8. Caddy proxies request with user context headers
-9. Backend receives request with `Remote-User`, `Remote-Groups`, etc.
+3. Authelia validates session
+4. Authenticated → Forward to service
+5. Not authenticated → Redirect to login
 
-See [Architecture Documentation](docs/ARCHITECTURE.md) for detailed diagrams.
+## Plugin System
 
-### Network Topology
+### How It Works
 
-**External Access**:
-- Port 80 (HTTP) → Caddy → Redirects to HTTPS
-- Port 443 (HTTPS) → Caddy → Terminates TLS
+1. **Plugin Manifests**: Each service has a `plugin.json` describing its configuration
+2. **Plugin Config**: `plugins-config.json` lists enabled plugins
+3. **Build System**: Python scripts generate all configuration from plugins
+4. **Deployment**: Standard `docker-compose up` with generated files
 
-**Internal Docker Network**:
-- Authelia (internal:9091)
-- Backend services (no published ports)
-- All inter-service communication on bridge network
+### Plugin Structure
 
-**Security Benefits**:
-- Backend services never exposed directly to internet
-- All traffic encrypted (HTTPS)
-- Centralized authentication
-- Session sharing across services
+```
+plugins/
+├── core/                  # Essential plugins
+│   ├── dns-tools/
+│   │   ├── plugin.json   # Plugin manifest
+│   │   └── ui/           # UI files
+│   └── user-admin/
+├── available/             # Optional plugins
+│   ├── excalidraw/
+│   ├── portainer/
+│   └── ... (20+ more)
+└── custom/               # Your plugins
+```
+
+### Managing Plugins
+
+```bash
+# List all plugins
+./scripts/plugin-manager.py list
+
+# Enable a plugin
+./scripts/plugin-manager.py enable available/n8n
+
+# Disable a plugin
+./scripts/plugin-manager.py disable available/portainer
+
+# Get plugin info
+./scripts/plugin-manager.py info available/excalidraw
+
+# Validate configuration
+./scripts/plugin-manager.py validate
+```
+
+### Building Configuration
+
+```bash
+# Generate all configuration files
+./scripts/build.py
+
+# This creates:
+# - output/index.html          (dashboard)
+# - output/docker-compose.yml  (services)
+# - output/Caddyfile          (routing)
+# - output/.env.template      (variables)
+```
 
 ## Quick Start
-
-**Everything included!** All components use pre-built Docker images - no separate repositories to clone, no build process required. Just configure and deploy.
 
 ### Prerequisites
 
 - Docker and Docker Compose installed
-- Domain name with DNS control
-- Ports 80 and 443 available
-- Basic understanding of Docker and reverse proxies
+- Domain name with DNS pointing to your server
+- Python 3.7+ (for build scripts)
 
-### 5-Minute Deployment
+### Installation
 
-1. **Clone this repository**:
-   ```bash
-   git clone https://github.com/dustinnh/Walled-Garden.git
-   cd Walled-Garden/examples
-   ```
+```bash
+# 1. Clone the repository
+git clone https://github.com/yourusername/walledgarden.git
+cd walledgarden
 
-2. **Generate secrets**:
-   ```bash
-   chmod +x scripts/generate-secrets.sh
-   ./scripts/generate-secrets.sh > secrets.txt
-   # Save these secrets securely!
-   ```
+# 2. Configure your domain
+edit plugins-config.json  # Set your domain
 
-3. **Configure your domain**:
-   ```bash
-   # Edit examples/docker-compose.yml
-   # Edit examples/Caddyfile
-   # Edit examples/authelia-config.yml
-   # Replace "example.com" with your actual domain
-   ```
+# 3. Choose your plugins
+./scripts/plugin-manager.py list
+./scripts/plugin-manager.py enable available/YOUR_CHOICE
 
-4. **Create your first user**:
-   ```bash
-   # Generate password hash
-   docker run --rm -it authelia/authelia:latest \
-     authelia hash-password 'YourSecurePassword123!'
-   
-   # Add to examples/users_database.yml
-   ```
+# 4. Build configuration
+./scripts/build.py
 
-5. **Deploy the stack**:
-   ```bash
-   cp examples/* /opt/authelia-stack/  # Or your deployment directory
-   cd /opt/authelia-stack
-   docker compose up -d
-   ```
+# 5. Generate secrets
+cd output
+../scripts/generate-secrets.sh > .env
 
-6. **Verify deployment**:
-   ```bash
-   docker compose ps
-   curl https://your-domain.com/health
-   ```
+# 6. Configure Authelia
+cp ../examples/authelia-config.yml authelia/configuration.yml
+# Edit with your settings
 
-See [Full Deployment Guide](docs/PDR.md) for comprehensive instructions.
+# 7. Deploy
+docker-compose up -d
 
-## Development Workflow
-
-If you're running this in production and want to develop safely:
-
-### Quick Workflow
-1. **Edit** in this git repository (`walledgarden-gh/`)
-2. **Commit** changes to git
-3. **Test** in staging environment
-4. **Deploy** to production with deployment script
-
-### Deployment Scripts
-- `scripts/deploy-staging.sh` - Deploy to staging for testing
-- `scripts/deploy-production.sh` - Deploy tested changes to production
-- `scripts/backup.sh` - Backup production before deployment
-
-### Keeping Production Safe
-- Git repository = source of truth (this directory)
-- Staging environment = test changes safely
-- Production = deploy only tested changes
-- Secrets = separate .env files (never in git)
-
-See [Development Workflow Guide](docs/DEVELOPMENT-WORKFLOW.md) for complete details on:
-- Setting up staging environment
-- Managing secrets across environments
-- Daily development workflow
-- Troubleshooting deployments
+# 8. Access your services
+# https://yourdomain.com
+```
 
 ## Documentation
 
 ### Core Documentation
 
-- **[Architecture](docs/ARCHITECTURE.md)** - System design, network topology, security model
-- **[Project Design Record (PDR)](docs/PDR.md)** - Complete deployment guide (1,955 lines)
-- **[How-To: Add Services](docs/HOWTO-ADD-SERVICES.md)** - Step-by-step service integration
-- **[Nexterm Integration](docs/NEXTERM-INSTALLATION.md)** - Terminal access example
+- [Plugin Schema Documentation](plugins/PLUGIN_SCHEMA.md) - Complete plugin manifest reference
+- [Plugin Development Guide](PLUGIN_DEVELOPMENT.md) - Create your own plugins
+- [Architecture Overview](docs/ARCHITECTURE.md) - System design details
+- [Deployment Guide](docs/PDR.md) - Production deployment reference
+- [How to Add Services](docs/HOWTO-ADD-SERVICES.md) - Service integration guide
 
-### Advanced Topics
+### Plugin Documentation
 
-- **[DNS Tool Architecture](docs/advanced/dns-tool-architecture.md)** - Custom troubleshooting utilities
-- **[Custom Styling](docs/advanced/custom-styling.md)** - Theming Authelia and dashboard
-- **[Backup & Recovery](docs/OPERATIONS.md)** - Operational procedures
+- [Available Plugins Catalog](plugins/available/README.md) - List of pre-built plugins
+- [Core Plugins Guide](plugins/core/README.md) - Essential plugin documentation
+- [Custom Plugin Examples](plugins/custom/README.md) - Example custom plugins
 
-### Quick References
+## Available Plugins
 
-- **[Configuration Guide](docs/CONFIGURATION.md)** - All environment variables explained
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
-- **[Security Best Practices](docs/SECURITY.md)** - Hardening recommendations
+### Core Plugins (Always Enabled)
 
-## Examples
+| Plugin | Description | Icon |
+|--------|-------------|------|
+| DNS Tools | Network diagnostic utilities | 🔍 |
+| User Admin | Authelia user management interface | 👤 |
 
-All example configurations are in the [`examples/`](examples/) directory:
+### Popular Available Plugins
 
-### Configuration Files
+| Plugin | Description | Category | Icon |
+|--------|-------------|----------|------|
+| Excalidraw | Collaborative whiteboard | Productivity | ✏️ |
+| Portainer | Docker container management | Development | 🐳 |
+| n8n | Workflow automation platform | Productivity | 🔄 |
+| IT Tools | Developer utilities collection | Utilities | 🔧 |
+| Open WebUI | LLM chat interface | Productivity | 🤖 |
+| Cockpit | Server administration | Monitoring | 🖥️ |
+| Homepage | Customizable dashboard | Utilities | 🏠 |
+| Uptime Kuma | Service monitoring | Monitoring | 📊 |
+| Filebrowser | Web file manager | Utilities | 📁 |
+| Netdata | Real-time monitoring | Monitoring | 📈 |
 
-- **[docker-compose.yml](examples/docker-compose.yml)** - Full stack orchestration
-- **[Caddyfile](examples/Caddyfile)** - Reverse proxy routing
-- **[authelia-config.yml](examples/authelia-config.yml)** - Authentication server config
-- **[.env.template](examples/.env.template)** - Environment variables template
+[View all 20+ available plugins →](plugins/available/)
 
-### Dashboard Templates
+## Creating Custom Plugins
 
-- **[Application Launcher](examples/dashboard/index.html)** - Main dashboard UI
-- **[User Management](examples/dashboard/admin.html)** - Admin interface
-- **[DNS Tools](examples/dashboard/dns.html)** - Troubleshooting utilities
+### Quick Example
 
-### Helper Scripts
+Create a simple notes plugin:
 
-- **[generate-secrets.sh](scripts/generate-secrets.sh)** - Generate Authelia secrets
-- **[backup.sh](scripts/backup.sh)** - Backup configurations and data
-- **[check-config.sh](scripts/check-config.sh)** - Validate configurations
+```json
+// plugins/custom/my-notes/plugin.json
+{
+  "id": "my-notes",
+  "name": "My Notes",
+  "version": "1.0.0",
+  "description": "Personal note-taking app",
+  "icon": "📝",
+  "category": "productivity",
+  "type": "docker",
 
-**IMPORTANT**: All example configurations have been sanitized. You MUST:
-- Generate your own secrets (never use examples in production)
-- Replace `example.com` with your actual domain
-- Configure SMTP settings for email notifications (optional)
-- Review and customize access control rules
+  "docker": {
+    "enabled": true,
+    "image": "standardnotes/web",
+    "internalPort": 3000
+  },
+
+  "routing": {
+    "type": "path",
+    "path": "/notes"
+  },
+
+  "authentication": {
+    "required": true,
+    "policy": "one_factor"
+  }
+}
+```
+
+Enable and deploy:
+
+```bash
+./scripts/plugin-manager.py enable custom/my-notes
+./scripts/build.py
+cd output && docker-compose up -d
+```
+
+Your app is now available at `https://yourdomain.com/notes`!
+
+[Full Plugin Development Guide →](PLUGIN_DEVELOPMENT.md)
 
 ## Screenshots
 
-### Main Dashboard
+### Dashboard
 ![Dashboard](screenshots/dashboard.png)
-*Application launcher showing all authenticated services with SSO protection*
+*Modular dashboard generated from enabled plugins*
 
-### Authelia Login
-![Login](screenshots/authelia-login.png)
-*Single sign-on authentication portal with 2FA support*
-
-### Architecture Diagram
-![Architecture](screenshots/architecture-overview.png)
-*Complete system architecture showing network topology and authentication flow*
+### Plugin Manager
+![Plugin Manager](screenshots/plugin-manager.png)
+*CLI tool for managing plugins*
 
 ### DNS Tools
 ![DNS Tools](screenshots/dns-tools.png)
-*Custom DNS troubleshooting utilities for diagnosing connectivity issues*
+*Built-in network diagnostic utilities*
 
-### User Management
+### User Admin
 ![User Admin](screenshots/user-admin.png)
-*Web-based interface for managing user accounts, passwords, and groups*
+*Web-based Authelia user management*
 
-## Related Projects
+## Migration from v1.x
 
-### User Management Component
+If you're using the previous version without plugins:
 
-**[Authelia Admin Panel](https://github.com/dustinnh/Authelia-Admin-Panel)** - Production-ready web interface for managing file-based Authelia user accounts
+1. **Backup your configuration** (especially Authelia config and users)
+2. **Install the plugin system** (clone new version)
+3. **Enable equivalent plugins** for your existing services
+4. **Run build system** to generate new configuration
+5. **Compare configurations** and migrate custom settings
+6. **Deploy with new configuration**
 
-[![Version](https://img.shields.io/badge/version-1.10.0-green.svg)](https://github.com/dustinnh/Authelia-Admin-Panel/releases)
-[![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/dustinnh/Authelia-Admin-Panel)
-
-**The only dedicated GUI administration tool for file-based Authelia deployments.**
-
-This walled garden **includes the Authelia Admin Panel** as the user management component (accessible at `/admin` endpoint). The admin panel provides:
-
-**Security Features**:
-- 🔒 Password breach detection via HaveIBeenPwned (600M+ breaches)
-- 🔒 Password history tracking (prevent reuse of last N passwords)
-- 🔒 Password expiration policies (configurable days)
-- 🔒 HMAC-signed audit logging with tamper detection
-- 🔒 Email notifications for security events
-
-**Management Features**:
-- 👤 Create, read, update, delete users via web interface
-- 👤 Group management and bulk CSV import/export
-- 👤 Real-time password validation with strength meter
-- 👤 Search, filter, and sort users
-- 👤 User statistics and password health dashboard
-
-**Production-Ready**:
-- ⚡ Gunicorn WSGI server (4 workers, production-grade)
-- ⚡ File locking for safe concurrent access
-- ⚡ CSRF protection and XSS prevention
-- ⚡ Rate limiting and security headers
-
-### Standalone Use
-
-**The Admin Panel can also be used independently** with your existing Authelia setup if you already have Authelia running with Nginx, Traefik, or another reverse proxy.
-
-See the [Admin Panel repository](https://github.com/dustinnh/Authelia-Admin-Panel) for standalone installation instructions.
-
-### How It's Integrated
-
-In this walled garden architecture, the admin panel is included as a **pre-built Docker image** in `examples/docker-compose.yml`:
-
-```yaml
-user-admin:
-  image: dutdok4/authelia-admin:latest  # Pre-built image
-  container_name: user-admin
-  # ... configuration
-```
-
-**No separate installation required!** The image is automatically pulled when you run `docker compose up -d`.
-
-To pin to a specific version (recommended for production):
-```yaml
-image: dutdok4/authelia-admin:1.10.0  # Pin to specific version
-```
-
-### Official Projects
-
-- **[Authelia](https://www.authelia.com/)** - The authentication and authorization server
-- **[Caddy](https://caddyserver.com/)** - The reverse proxy with automatic HTTPS
-
-### Community Resources
-
-- [Authelia Documentation](https://www.authelia.com/docs/)
-- [Caddy Documentation](https://caddyserver.com/docs/)
-- [r/selfhosted](https://www.reddit.com/r/selfhosted/) - Self-hosting community
-- [r/homelab](https://www.reddit.com/r/homelab/) - Homelab community
-
-## FAQ
-
-### Is this a software product I can install?
-
-No. This is a **reference architecture and documentation project**. Think of it as a comprehensive blueprint with working examples. You'll need to clone, study, and customize it for your environment.
-
-### Can I use this in production?
-
-Yes! The architecture is production-ready and battle-tested at run.nycapphouse.com. However, you MUST:
-- Generate your own secrets (never use example values)
-- Review and customize all configurations
-- Understand what each component does
-- Implement proper backup and monitoring
-
-### What's the difference between this and Authelia Admin Panel?
-
-- **[Authelia Admin Panel](https://github.com/dustinnh/Authelia-Admin-Panel)**: Standalone Flask application for managing Authelia users (can be used with any Authelia setup)
-- **Walled Garden**: Complete reference architecture with Caddy + Authelia + multiple services + documentation
-
-They complement each other:
-- The **Admin Panel** is a software product that can be used independently
-- The **Walled Garden** is a complete architecture that includes the Admin Panel as one component
-- Use Admin Panel alone if you already have Authelia
-- Use Walled Garden for complete SSO gateway deployment from scratch
-
-### How do I add a new service?
-
-See [How-To: Add Services](docs/HOWTO-ADD-SERVICES.md) for step-by-step instructions. The process is:
-1. Add service to docker-compose.yml (internal network only)
-2. Add routing rule to Caddyfile
-3. Add access control rule to Authelia config
-4. Restart services
-
-### Can I use LDAP instead of file-based users?
-
-Yes! Authelia supports multiple authentication backends. See [Authelia Documentation](https://www.authelia.com/configuration/first-factor/ldap/) for LDAP configuration.
-
-### Do I need a real domain name?
-
-Yes, for production. Authelia's session cookies require a proper domain for SSO to work. For testing, you can use:
-- Local DNS (edit /etc/hosts)
-- Wildcard DNS services (*.example.com)
-- Self-signed certificates (not recommended)
-
-### What services are included?
-
-The example deployment includes:
-- Excalidraw (whiteboard)
-- Portainer (container management)
-- n8n (workflow automation)
-- User Admin (authelia-file-admin)
-- DNS Tools (custom troubleshooting)
-
-You can add any service that works with reverse proxies.
+[Detailed Migration Guide →](docs/MIGRATION.md)
 
 ## Contributing
 
-Contributions are welcome! We're especially interested in:
+### Ways to Contribute
 
-- **Documentation improvements** - Clarify confusing sections, fix typos
-- **Example integrations** - Add guides for popular services
-- **Configuration examples** - Alternative setups (LDAP, Redis, etc.)
-- **Bug fixes** - Corrections to example configurations
-- **Screenshot updates** - Better visuals
+1. **Create Plugins**: Develop and share new service plugins
+2. **Improve Documentation**: Fix typos, add examples, clarify instructions
+3. **Report Issues**: Found a bug? Let us know!
+4. **Share Configurations**: Submit your working configurations as examples
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+### Plugin Contribution
 
-### How to Contribute
+To submit a new plugin:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-addition`)
-3. Make your changes
-4. Test thoroughly (validate configs, check for secrets)
-5. Commit (`git commit -am 'Add amazing addition'`)
-6. Push to branch (`git push origin feature/amazing-addition`)
-7. Open a Pull Request
+1. Create plugin in `plugins/available/YOUR_PLUGIN/`
+2. Follow the [Plugin Development Guide](PLUGIN_DEVELOPMENT.md)
+3. Test thoroughly
+4. Submit pull request with:
+   - Plugin files
+   - Documentation
+   - Example configuration
 
-**Important**: Never commit production secrets or identifying information. All PRs are reviewed for security.
+### Guidelines
 
-## Troubleshooting
+- Keep security as top priority
+- Follow existing code style
+- Test before submitting
+- Document your changes
+- One feature per pull request
 
-### Authentication Loop
+## Support
 
-**Symptom**: Redirects back and forth between Authelia and service
+- **Issues**: [GitHub Issues](https://github.com/yourusername/walledgarden/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/walledgarden/discussions)
+- **Documentation**: [Full Documentation](docs/)
+- **Examples**: [Example Configurations](examples/)
 
-**Solution**: Check that `session.domain` in Authelia config is the **parent domain** (e.g., `example.com` not `auth.example.com`)
+## Roadmap
 
-### SSL Certificate Errors
+### Coming Soon
 
-**Symptom**: Let's Encrypt rate limit or cert not issued
+- [ ] Plugin marketplace/registry
+- [ ] Web-based plugin manager UI
+- [ ] Automatic plugin updates
+- [ ] Plugin templates generator
+- [ ] Integration testing framework
+- [ ] Multi-instance plugin support
+- [ ] Plugin resource monitoring
+- [ ] Backup/restore for plugin data
 
-**Solution**: 
-- Verify DNS is correct: `dig your-domain.com +short`
-- Check Caddy logs: `docker compose logs caddy | grep -i acme`
-- Ensure ports 80/443 are open: `sudo ufw status`
+## Related Projects
 
-### Service Not Accessible
-
-**Symptom**: 404 or 502 error when accessing service
-
-**Solution**:
-- Verify service is running: `docker compose ps`
-- Check service logs: `docker compose logs service-name`
-- Test internal connectivity: `docker compose exec caddy wget -O- http://service:port`
-
-See [Full Troubleshooting Guide](docs/TROUBLESHOOTING.md) for more solutions.
+- [Authelia](https://www.authelia.com/) - The authentication server
+- [Caddy](https://caddyserver.com/) - The reverse proxy
+- [authelia-file-admin](https://github.com/yourusername/authelia-file-admin) - User management interface
 
 ## License
 
-MIT License
+MIT License - See [LICENSE](LICENSE) file for details.
 
-Copyright (c) 2024 Dustin @ NYC App House
+## Acknowledgments
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+- Authelia team for the excellent authentication server
+- Caddy team for the fantastic reverse proxy
+- All plugin contributors
+- The self-hosting community
 
 ---
 
-**Built with** ❤️ **for the self-hosted community**
+**Ready to secure your services with a modular architecture?** 🚀
 
-**Questions?** Open an issue or start a discussion!
-
-**Like this project?** Give it a ⭐ on GitHub!
+Start with `./scripts/build.py` and have your walled garden running in minutes!

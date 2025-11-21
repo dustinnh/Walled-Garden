@@ -1,0 +1,29 @@
+{
+  "enabled": [
+    "core/dns-tools",
+    "core/user-admin",
+    "available/excalidraw",
+    "available/portainer",
+    "available/n8n",
+    "available/it-tools",
+    "available/open-webui"
+  ],
+  "settings": {
+    "domain": "example.com",
+    "timezone": "America/New_York",
+    "dashboard": {
+      "title": "Application Launcher",
+      "subtitle": "Secure access to all your applications",
+      "theme": "default"
+    },
+    "authelia": {
+      "sessionDomain": "example.com",
+      "defaultPolicy": "deny",
+      "totpIssuer": "Walled Garden"
+    },
+    "caddy": {
+      "email": "admin@example.com",
+      "acmeServer": "https://acme-v02.api.letsencrypt.org/directory"
+    }
+  }
+}

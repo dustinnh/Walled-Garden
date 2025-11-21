@@ -1,0 +1,91 @@
+{
+  "id": "cockpit",
+  "name": "Cockpit",
+  "version": "1.0.0",
+  "description": "Web-based server administration interface",
+  "author": "Red Hat",
+  "icon": "🖥️",
+  "category": "monitoring",
+  "type": "docker",
+  "tags": ["monitoring", "server", "administration", "system"],
+
+  "ui": {
+    "dashboard": {
+      "visible": true,
+      "requiresAdmin": true,
+      "order": 40
+    }
+  },
+
+  "routing": {
+    "type": "path",
+    "path": "/cockpit",
+    "stripPath": true
+  },
+
+  "docker": {
+    "enabled": true,
+    "image": "cockpit/ws",
+    "tag": "latest",
+    "containerName": "cockpit",
+    "internalPort": 9090,
+    "environment": {
+      "COCKPIT_CORS": "true"
+    },
+    "volumes": [
+      {
+        "type": "bind",
+        "source": "/var/run/docker.sock",
+        "target": "/var/run/docker.sock",
+        "readOnly": false
+      },
+      {
+        "type": "bind",
+        "source": "/proc",
+        "target": "/host/proc",
+        "readOnly": true
+      },
+      {
+        "type": "bind",
+        "source": "/sys",
+        "target": "/host/sys",
+        "readOnly": true
+      }
+    ],
+    "networks": ["internal"],
+    "dependencies": [],
+    "healthcheck": {
+      "test": "curl -f http://localhost:9090/ping || exit 1",
+      "interval": "30s",
+      "timeout": "10s",
+      "retries": 3
+    }
+  },
+
+  "authentication": {
+    "required": true,
+    "policy": "two_factor",
+    "requiredGroups": ["admins"],
+    "bypassPaths": ["/ping", "/metrics"]
+  },
+
+  "storage": {
+    "persistent": false
+  },
+
+  "configuration": {
+    "settings": []
+  },
+
+  "requirements": {
+    "minVersion": "1.0.0",
+    "plugins": [],
+    "services": ["docker"]
+  },
+
+  "links": {
+    "documentation": "https://cockpit-project.org/guide/latest/",
+    "homepage": "https://cockpit-project.org/",
+    "repository": "https://github.com/cockpit-project/cockpit"
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "id": "it-tools",
+  "name": "IT Tools",
+  "version": "1.0.0",
+  "description": "Collection of handy online tools for developers",
+  "author": "CorentinTh",
+  "icon": "🔧",
+  "category": "utilities",
+  "type": "docker",
+  "tags": ["tools", "developer", "utilities", "converter"],
+
+  "ui": {
+    "dashboard": {
+      "visible": true,
+      "requiresAdmin": false,
+      "order": 50
+    }
+  },
+
+  "routing": {
+    "type": "path",
+    "path": "/tools",
+    "stripPath": false
+  },
+
+  "docker": {
+    "enabled": true,
+    "image": "corentinth/it-tools",
+    "tag": "latest",
+    "containerName": "it-tools",
+    "internalPort": 80,
+    "environment": {},
+    "volumes": [],
+    "networks": ["internal"],
+    "dependencies": [],
+    "healthcheck": {
+      "test": "curl -f http://localhost:80 || exit 1",
+      "interval": "30s",
+      "timeout": "10s",
+      "retries": 3
+    },
+    "resources": {
+      "limits": {
+        "memory": "256M",
+        "cpus": "0.5"
+      }
+    }
+  },
+
+  "authentication": {
+    "required": true,
+    "policy": "one_factor",
+    "bypassPaths": []
+  },
+
+  "storage": {
+    "persistent": false
+  },
+
+  "configuration": {
+    "settings": []
+  },
+
+  "requirements": {
+    "minVersion": "1.0.0",
+    "plugins": [],
+    "services": []
+  },
+
+  "links": {
+    "documentation": "https://github.com/CorentinTh/it-tools#readme",
+    "homepage": "https://it-tools.tech/",
+    "repository": "https://github.com/CorentinTh/it-tools"
+  }
+}

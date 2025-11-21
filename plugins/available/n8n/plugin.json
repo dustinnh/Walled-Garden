@@ -1,0 +1,105 @@
+{
+  "id": "n8n",
+  "name": "n8n Automation",
+  "version": "1.0.0",
+  "description": "Workflow automation tool with 400+ integrations",
+  "author": "n8n",
+  "icon": "🔄",
+  "category": "productivity",
+  "type": "docker",
+  "tags": ["automation", "workflow", "integration", "zapier-alternative"],
+
+  "ui": {
+    "dashboard": {
+      "visible": true,
+      "requiresAdmin": false,
+      "order": 30
+    }
+  },
+
+  "routing": {
+    "type": "subdomain",
+    "subdomain": "n8n"
+  },
+
+  "docker": {
+    "enabled": true,
+    "image": "n8nio/n8n",
+    "tag": "latest",
+    "containerName": "n8n",
+    "internalPort": 5678,
+    "environment": {
+      "N8N_HOST": "n8n.${DOMAIN}",
+      "N8N_PROTOCOL": "https",
+      "N8N_PORT": "5678",
+      "NODE_ENV": "production",
+      "WEBHOOK_URL": "https://n8n.${DOMAIN}/",
+      "GENERIC_TIMEZONE": "${TIMEZONE}",
+      "N8N_ENCRYPTION_KEY": "${N8N_ENCRYPTION_KEY}"
+    },
+    "volumes": [
+      {
+        "type": "named",
+        "source": "n8n_data",
+        "target": "/home/node/.n8n"
+      }
+    ],
+    "networks": ["internal"],
+    "dependencies": [],
+    "healthcheck": {
+      "test": "wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1",
+      "interval": "30s",
+      "timeout": "10s",
+      "retries": 3
+    }
+  },
+
+  "authentication": {
+    "required": true,
+    "policy": "one_factor",
+    "bypassPaths": ["/webhook", "/webhook-test", "/rest/oauth2-credential/callback"]
+  },
+
+  "storage": {
+    "persistent": true,
+    "volumes": [
+      {
+        "name": "n8n_data",
+        "path": "/home/node/.n8n",
+        "size": "5Gi"
+      }
+    ]
+  },
+
+  "configuration": {
+    "settings": [
+      {
+        "key": "N8N_ENCRYPTION_KEY",
+        "label": "Encryption Key",
+        "type": "password",
+        "required": true,
+        "description": "Key to encrypt credentials (generate with: openssl rand -base64 32)"
+      },
+      {
+        "key": "TIMEZONE",
+        "label": "Timezone",
+        "type": "string",
+        "default": "America/New_York",
+        "required": false,
+        "description": "Timezone for workflow scheduling"
+      }
+    ]
+  },
+
+  "requirements": {
+    "minVersion": "1.0.0",
+    "plugins": [],
+    "services": []
+  },
+
+  "links": {
+    "documentation": "https://docs.n8n.io/",
+    "homepage": "https://n8n.io/",
+    "repository": "https://github.com/n8n-io/n8n"
+  }
+}
