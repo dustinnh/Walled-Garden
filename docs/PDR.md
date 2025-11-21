@@ -114,7 +114,7 @@ No direct external access to backend services
 - Root/sudo access for initial setup
 
 ### 3.2 Domain Requirements
-- Valid domain name (example: run.nycapphouse.com)
+- Valid domain name (example: example.com)
 - DNS access for A/AAAA record configuration
 - Email address for ACME certificate registration
 
@@ -271,14 +271,14 @@ excalidraw:
 The Caddyfile implements forward authentication using Authelia's verification endpoint:
 
 ```caddyfile
-run.nycapphouse.com {
+example.com {
     encode gzip
     tls email@example.com
 
     route {
         # Forward auth to Authelia
         forward_auth authelia:9091 {
-            uri /api/verify?rd=https://run.nycapphouse.com
+            uri /api/verify?rd=https://example.com
             copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
         }
 
@@ -321,7 +321,7 @@ port: 9091
 jwt:
   secret: "<REPLACE_WITH_RANDOM_64_CHAR_STRING>"
 
-default_redirection_url: https://run.nycapphouse.com
+default_redirection_url: https://example.com
 
 authentication_backend:
   file:
@@ -339,18 +339,18 @@ session:
   secret: "<REPLACE_WITH_RANDOM_64_CHAR_STRING>"
   inactivity: 3600      # 1 hour
   expiration: 7200      # 2 hours
-  domain: nycapphouse.com  # Parent domain for session cookie
+  domain: example.com  # Parent domain for session cookie
   same_site: lax
 
 totp:
-  issuer: nycapphouse.com
+  issuer: example.com
   period: 30
   skew: 1
 
 access_control:
   default_policy: deny
   rules:
-    - domain: "run.nycapphouse.com"
+    - domain: "example.com"
       policy: one_factor  # Change to two_factor for TOTP requirement
 
 notifier:
@@ -567,14 +567,14 @@ Configure A record pointing to VPS IP:
 ```
 Type: A
 Name: run
-Domain: nycapphouse.com
+Domain: example.com
 Value: <VPS_IP_ADDRESS>
 TTL: 3600
 ```
 
 **Verification**:
 ```bash
-dig run.nycapphouse.com +short
+dig example.com +short
 # Should return: <VPS_IP_ADDRESS>
 ```
 
@@ -666,7 +666,7 @@ EOF
 
 #### 5.3.2 Create Caddyfile
 
-**Important**: Replace `run.nycapphouse.com` with your actual domain and `you@example.com` with your email.
+**Important**: Replace `example.com` with your actual domain and `you@example.com` with your email.
 
 ```bash
 cat > Caddyfile << 'EOF'
@@ -674,14 +674,14 @@ cat > Caddyfile << 'EOF'
     email you@example.com
 }
 
-run.nycapphouse.com {
+example.com {
     encode gzip
     tls you@example.com
 
     route {
         # Forward auth to Authelia
         forward_auth authelia:9091 {
-            uri /api/verify?rd=https://run.nycapphouse.com
+            uri /api/verify?rd=https://example.com
             copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
         }
 
@@ -807,7 +807,7 @@ theme: light
 jwt:
   secret: "${JWT_SECRET}"
 
-default_redirection_url: https://run.nycapphouse.com
+default_redirection_url: https://example.com
 
 authentication_backend:
   file:
@@ -825,18 +825,18 @@ session:
   secret: "${SESSION_SECRET}"
   inactivity: 3600
   expiration: 7200
-  domain: nycapphouse.com
+  domain: example.com
   same_site: lax
 
 totp:
-  issuer: nycapphouse.com
+  issuer: example.com
   period: 30
   skew: 1
 
 access_control:
   default_policy: deny
   rules:
-    - domain: "run.nycapphouse.com"
+    - domain: "example.com"
       policy: one_factor
 
 notifier:
@@ -917,7 +917,7 @@ docker compose logs --tail=50 authelia | grep -i error
 
 ```bash
 # Test SSL certificate provisioning
-curl -I https://run.nycapphouse.com
+curl -I https://example.com
 
 # Expected: HTTP/2 200, valid certificate from Let's Encrypt
 ```
@@ -925,13 +925,13 @@ curl -I https://run.nycapphouse.com
 #### 5.5.2 Authentication Flow Test
 
 **Test Procedure**:
-1. Open browser to `https://run.nycapphouse.com`
+1. Open browser to `https://example.com`
 2. Expected: Redirect to Authelia login page
 3. Enter credentials from users_database.yml
 4. Expected: Redirect to dashboard
 5. Click "Excalidraw" link
 6. Expected: Application loads without additional authentication
-7. Open new browser tab to `https://run.nycapphouse.com/cloud/`
+7. Open new browser tab to `https://example.com/cloud/`
 8. Expected: Direct access to Nextcloud (session preserved)
 
 #### 5.5.3 Security Verification
@@ -1251,11 +1251,11 @@ echo "authelia/users_database.yml" >> .gitignore
 access_control:
   default_policy: deny
   rules:
-    - domain: "run.nycapphouse.com"
+    - domain: "example.com"
       policy: two_factor  # Requires TOTP
       subject:
         - "group:admins"
-    - domain: "run.nycapphouse.com"
+    - domain: "example.com"
       policy: one_factor  # Password only
       subject:
         - "group:users"
@@ -1334,7 +1334,7 @@ docker compose logs caddy | grep -i certificate
 **Common Causes & Solutions**:
 1. **DNS not propagated**:
    - Wait 1-24 hours for DNS propagation
-   - Verify: `dig run.nycapphouse.com +short`
+   - Verify: `dig example.com +short`
 2. **Port 80 blocked**:
    - ACME requires port 80 for HTTP-01 challenge
    - Check: `sudo ufw status`
@@ -1353,7 +1353,7 @@ docker compose stop caddy
 docker volume rm authelia-stack_caddy_data
 
 # Verify DNS
-dig run.nycapphouse.com +short
+dig example.com +short
 
 # Verify firewall
 sudo ufw status | grep -E '80|443'
@@ -1384,7 +1384,7 @@ cat authelia/configuration.yml | grep -A 10 session
 **Common Causes & Solutions**:
 1. **Domain mismatch**:
    - `session.domain` must match actual domain
-   - Use parent domain: `nycapphouse.com` not `run.nycapphouse.com`
+   - Use parent domain: `example.com` not `example.com`
 2. **Cookie settings**:
    - `same_site: lax` required for cross-path cookies
 3. **Time synchronization**:
@@ -1395,7 +1395,7 @@ cat authelia/configuration.yml | grep -A 10 session
 ```bash
 # Fix session domain in configuration
 nano authelia/configuration.yml
-# Ensure: domain: nycapphouse.com (parent domain)
+# Ensure: domain: example.com (parent domain)
 
 # Restart Authelia
 docker compose restart authelia
@@ -1505,10 +1505,10 @@ echo "=== Container Status ==="
 docker compose ps
 
 echo -e "\n=== Connectivity Tests ==="
-curl -I -s https://run.nycapphouse.com | head -1
+curl -I -s https://example.com | head -1
 
 echo -e "\n=== Certificate Check ==="
-openssl s_client -connect run.nycapphouse.com:443 -servername run.nycapphouse.com < /dev/null 2>/dev/null | openssl x509 -noout -dates
+openssl s_client -connect example.com:443 -servername example.com < /dev/null 2>/dev/null | openssl x509 -noout -dates
 
 echo -e "\n=== Recent Errors ==="
 docker compose logs --tail=20 --since=10m | grep -i error | wc -l
@@ -1593,7 +1593,7 @@ session:
 docker stats
 
 # Check response times
-time curl -I https://run.nycapphouse.com
+time curl -I https://example.com
 
 # Monitor authentication latency
 docker compose logs authelia | grep "authentication" | tail -20
@@ -1640,22 +1640,22 @@ When ready to add Cloudflare CDN:
 
 ### 10.2 Subdomain-Based Routing
 
-To migrate from path-based (`/excalidraw`) to subdomain-based (`excalidraw.run.nycapphouse.com`):
+To migrate from path-based (`/excalidraw`) to subdomain-based (`excalidraw.example.com`):
 
 **DNS Changes**:
 ```
-A record: excalidraw.run.nycapphouse.com -> <VPS_IP>
-A record: cloud.run.nycapphouse.com -> <VPS_IP>
+A record: excalidraw.example.com -> <VPS_IP>
+A record: cloud.example.com -> <VPS_IP>
 ```
 
 **Caddyfile Changes**:
 ```caddyfile
-excalidraw.run.nycapphouse.com {
+excalidraw.example.com {
     encode gzip
     
     route {
         forward_auth authelia:9091 {
-            uri /api/verify?rd=https://run.nycapphouse.com
+            uri /api/verify?rd=https://example.com
             copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
         }
         
@@ -1663,12 +1663,12 @@ excalidraw.run.nycapphouse.com {
     }
 }
 
-cloud.run.nycapphouse.com {
+cloud.example.com {
     encode gzip
     
     route {
         forward_auth authelia:9091 {
-            uri /api/verify?rd=https://run.nycapphouse.com
+            uri /api/verify?rd=https://example.com
             copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
         }
         
@@ -1682,8 +1682,8 @@ cloud.run.nycapphouse.com {
 access_control:
   rules:
     - domain:
-        - "excalidraw.run.nycapphouse.com"
-        - "cloud.run.nycapphouse.com"
+        - "excalidraw.example.com"
+        - "cloud.example.com"
       policy: one_factor
 ```
 

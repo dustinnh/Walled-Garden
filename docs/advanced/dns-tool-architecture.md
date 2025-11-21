@@ -27,7 +27,7 @@ handle {
 ```
 
 **Access**:
-- **URL**: https://run.nycapphouse.com/dns.html
+- **URL**: https://example.com/dns.html
 - **Authentication**: Protected by Authelia forward_auth
 - **Available to**: All authenticated users
 
@@ -55,7 +55,7 @@ handle_path /api/dns/* {
 }
 ```
 
-**API Endpoint**: https://run.nycapphouse.com/api/dns/dig
+**API Endpoint**: https://example.com/api/dns/dig
 
 ## Request Flow
 
@@ -65,7 +65,7 @@ handle_path /api/dns/* {
 └────────┬────────┘
          │ HTTPS GET
          ▼
-https://run.nycapphouse.com/dns.html
+https://example.com/dns.html
          │
          ▼
 ┌─────────────────────────┐
@@ -89,7 +89,7 @@ https://run.nycapphouse.com/dns.html
          │ User fills form, clicks "Run Query"
          │ JavaScript POST request
          ▼
-https://run.nycapphouse.com/api/dns/dig
+https://example.com/api/dns/dig
          │
          ▼
 ┌─────────────────────────┐

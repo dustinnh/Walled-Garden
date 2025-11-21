@@ -207,6 +207,20 @@ def copy_plugin_files(config: Dict[str, Any], output_dir: str):
     dashboard_dir = os.path.join(output_dir, "dashboard")
     os.makedirs(dashboard_dir, exist_ok=True)
 
+    # Copy shared dashboard assets (CSS, etc.)
+    if os.path.exists("dashboard"):
+        print_status("Copying shared dashboard assets...", "info")
+        # Copy CSS directory if it exists
+        css_src = os.path.join("dashboard", "css")
+        if os.path.exists(css_src):
+            css_dst = os.path.join(dashboard_dir, "css")
+            os.makedirs(css_dst, exist_ok=True)
+            for file in os.listdir(css_src):
+                src = os.path.join(css_src, file)
+                dst = os.path.join(css_dst, file)
+                shutil.copy2(src, dst)
+                print_status(f"Copied: dashboard/css/{file}", "success")
+
     enabled_plugins = config.get("enabled", [])
     for plugin_path in enabled_plugins:
         plugin_dir = os.path.join("plugins", plugin_path)

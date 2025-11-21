@@ -1,0 +1,149 @@
+/* Custom Authelia Theme - Walled Garden Purple Gradient */
+/* Matches dashboard styling */
+
+/* Apply purple gradient background to match dashboard */
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    min-height: 100vh !important;
+}
+
+/* Style the main container/root */
+#root {
+    background: transparent !important;
+}
+
+/* Login card/paper styling to match dashboard cards */
+[class*="MuiPaper"],
+[class*="Paper"],
+div[class*="card"],
+div[class*="Card"] {
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
+}
+
+/* Button styling with purple gradient */
+button[type="submit"],
+button[class*="MuiButton-contained"],
+button[class*="Button-contained"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    color: white !important;
+    text-transform: none !important;
+}
+
+button[type="submit"]:hover,
+button[class*="MuiButton-contained"]:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4292 100%) !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* Hide Authelia branding footer */
+footer,
+[class*="footer"],
+[class*="Footer"],
+div[class*="footer"] {
+    display: none !important;
+}
+
+/* Hide language selector */
+[class*="LanguageMenu"],
+[class*="languageSelector"],
+[class*="language-selector"],
+select[aria-label*="language"],
+select[aria-label*="Language"],
+button[aria-label*="language"],
+button[aria-label*="Language"] {
+    display: none !important;
+}
+
+/* Link colors to match purple theme */
+a {
+    color: #667eea !important;
+}
+
+a:hover {
+    color: #764ba2 !important;
+}
+
+/* Input field styling */
+input,
+input[class*="MuiInput"],
+input[class*="Input"] {
+    border-color: #e2e8f0 !important;
+}
+
+input:focus,
+input[class*="MuiInput"]:focus {
+    border-color: #667eea !important;
+    outline-color: #667eea !important;
+}
+
+/* Typography adjustments */
+h1, h2, h3, h4, h5, h6 {
+    color: #2d3748 !important;
+}
+
+/* Card top accent (similar to dashboard cards) */
+[class*="MuiPaper"]::before,
+[class*="Paper"]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px 12px 0 0;
+}
+
+/* Ensure proper card positioning for ::before pseudo-element */
+[class*="MuiPaper"],
+[class*="Paper"] {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Logo container adjustments */
+[class*="logo"],
+[class*="Logo"] {
+    margin-bottom: 1.5rem;
+}
+
+/* Remove any additional branding text */
+[class*="powered"],
+[class*="Powered"],
+[class*="branding"],
+[class*="Branding"] {
+    display: none !important;
+}
+
+/* Checkbox and remember me styling */
+[class*="MuiCheckbox"] {
+    color: #667eea !important;
+}
+
+[class*="MuiCheckbox-checked"] {
+    color: #667eea !important;
+}
+
+/* Text color adjustments */
+p, span, label {
+    color: #2d3748;
+}
+
+[class*="MuiFormHelperText"] {
+    color: #718096 !important;
+}
+
+/* Error states */
+[class*="error"],
+[class*="Error"] {
+    color: #e53e3e !important;
+}
+
+/* Success states */
+[class*="success"],
+[class*="Success"] {
+    color: #38a169 !important;
+}

@@ -1,6 +1,6 @@
 # How-To Guide: Adding Services to the Walled Garden
 
-Quick reference for adding new Docker containers, web pages, and routes to the run.nycapphouse.com setup.
+Quick reference for adding new Docker containers, web pages, and routes to the example.com setup.
 
 **Last Updated**: 2025-11-18
 
@@ -70,17 +70,17 @@ volumes:
 sudo nano /opt/authelia-stack/Caddyfile
 ```
 
-Inside the `run.nycapphouse.com` block, after the `forward_auth` section:
+Inside the `example.com` block, after the `forward_auth` section:
 
 ```caddyfile
-run.nycapphouse.com {
+example.com {
     encode gzip
 
     # ... existing auth bypass rules ...
 
     handle {
         forward_auth authelia:9091 {
-            uri /api/verify?rd=https://run.nycapphouse.com/auth/
+            uri /api/verify?rd=https://example.com/auth/
             copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
         }
 
@@ -124,10 +124,10 @@ sudo docker compose logs -f myservice
 
 ```bash
 # From browser:
-https://run.nycapphouse.com/myapp/
+https://example.com/myapp/
 
 # From command line:
-curl -I https://run.nycapphouse.com/myapp/
+curl -I https://example.com/myapp/
 ```
 
 ---
@@ -190,7 +190,7 @@ Use this template:
 No deployment needed! Caddy automatically serves files from `/srv`:
 
 ```
-https://run.nycapphouse.com/mypage.html
+https://example.com/mypage.html
 ```
 
 ### 2.3 Add to Dashboard
@@ -206,7 +206,7 @@ See [Section 5: Adding a Dashboard Card](#5-adding-a-dashboard-card)
 Point your subdomain to your server IP:
 
 ```
-A Record: myapp.nycapphouse.com → YOUR_SERVER_IP
+A Record: myapp.example.com → YOUR_SERVER_IP
 ```
 
 ### 3.2 Add Caddyfile Block
@@ -218,11 +218,11 @@ sudo nano /opt/authelia-stack/Caddyfile
 Add a new site block:
 
 ```caddyfile
-myapp.nycapphouse.com {
+myapp.example.com {
     encode gzip
 
     forward_auth authelia:9091 {
-        uri /api/verify?rd=https://run.nycapphouse.com/auth/
+        uri /api/verify?rd=https://example.com/auth/
         copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
     }
 
@@ -246,7 +246,7 @@ sudo docker compose logs -f caddy | grep -i acme
 ```
 
 **SSL Troubleshooting**:
-- DNS must be propagated: `dig myapp.nycapphouse.com +short`
+- DNS must be propagated: `dig myapp.example.com +short`
 - Port 80 must be open: `sudo ufw status`
 - Rate limits: 5 failures per hour per domain
 
@@ -350,7 +350,7 @@ sudo nano /opt/authelia-stack/Caddyfile
 ```
 
 ```caddyfile
-# Inside run.nycapphouse.com handle block:
+# Inside example.com handle block:
 handle_path /api/myapi/* {
     reverse_proxy my-api:5002
 }
@@ -365,7 +365,7 @@ sudo docker compose up -d my-api
 sudo docker compose restart caddy
 
 # Test
-curl https://run.nycapphouse.com/api/myapi/health
+curl https://example.com/api/myapi/health
 ```
 
 ---
@@ -425,7 +425,7 @@ No additional CSS needed!
 To make a path accessible without login, add to the `@authelia` matcher:
 
 ```caddyfile
-run.nycapphouse.com {
+example.com {
     encode gzip
 
     @authelia {
@@ -557,7 +557,7 @@ sudo docker compose logs authelia | grep -i error
 ```
 
 **Check 3**: Clear browser cookies
-- Delete cookies for `.nycapphouse.com`
+- Delete cookies for `.example.com`
 - Try incognito/private mode
 
 **Check 4**: Check Authelia session domain
@@ -565,13 +565,13 @@ sudo docker compose logs authelia | grep -i error
 sudo cat /opt/authelia-stack/authelia/configuration.yml | grep -i "domain:"
 ```
 
-Should be parent domain: `nycapphouse.com` (not `run.nycapphouse.com`)
+Should be parent domain: `example.com` (not `sub.example.com`)
 
 ### 7.4 SSL Certificate Issues
 
 **Check DNS**:
 ```bash
-dig yourdomain.nycapphouse.com +short
+dig yourdomain.example.com +short
 # Should return your server IP
 ```
 
@@ -687,13 +687,13 @@ sudo docker compose restart authelia
 sudo docker compose exec caddy wget -O- http://servicename:PORT/
 
 # Test external HTTPS
-curl -I https://run.nycapphouse.com/myapp/
+curl -I https://example.com/myapp/
 
 # Test with authentication
-curl -H "Cookie: session=..." https://run.nycapphouse.com/api/myapi/
+curl -H "Cookie: session=..." https://example.com/api/myapi/
 
 # Check DNS
-dig myapp.nycapphouse.com +short
+dig myapp.example.com +short
 
 # Check firewall
 sudo ufw status
@@ -818,10 +818,10 @@ if 'admins' not in groups.split(','):
 
 ```caddyfile
 # Caddyfile - new site block
-coolapp.nycapphouse.com {
+coolapp.example.com {
     encode gzip
     forward_auth authelia:9091 {
-        uri /api/verify?rd=https://run.nycapphouse.com/auth/
+        uri /api/verify?rd=https://example.com/auth/
         copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
     }
     reverse_proxy coolapp:8080
@@ -900,14 +900,14 @@ volumes:
 ### 3. Add to Caddyfile
 
 ```caddyfile
-run.nycapphouse.com {
+example.com {
     encode gzip
 
     # ... existing @authelia bypass rules ...
 
     handle {
         forward_auth authelia:9091 {
-            uri /api/verify?rd=https://run.nycapphouse.com/auth/
+            uri /api/verify?rd=https://example.com/auth/
             copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
         }
 
@@ -949,7 +949,7 @@ sudo docker compose restart caddy
 ```bash
 sudo docker compose ps myservice
 sudo docker compose logs -f myservice
-curl -I https://run.nycapphouse.com/myservice/
+curl -I https://example.com/myservice/
 ```
 
 ---
@@ -965,7 +965,7 @@ Before deploying to production:
 - [ ] SSL certificate obtained (check Caddy logs)
 - [ ] Service has `restart: unless-stopped`
 - [ ] Logs show no errors: `sudo docker compose logs servicename`
-- [ ] Health endpoint responds: `curl https://run.nycapphouse.com/service/health`
+- [ ] Health endpoint responds: `curl https://example.com/service/health`
 - [ ] Authentication tested (login required)
 - [ ] Volume permissions correct (if using bind mounts)
 

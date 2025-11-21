@@ -1,6 +1,6 @@
-# NYC App House Walled Garden Architecture
+# Walled Garden Architecture
 
-Complete visual documentation of the run.nycapphouse.com Docker-based authentication gateway.
+Complete visual documentation of the Docker-based authentication gateway.
 
 **Last Updated**: 2025-11-18
 **Infrastructure**: Docker Compose + Caddy + Authelia
@@ -59,8 +59,8 @@ graph TB
     Caddy -->|/api/dns/*| DNSTools
     Caddy -->|/portainer/*| Portainer
     Caddy -->|/n8n/*| N8N
-    Caddy -->|xcal.nycapphouse.com| Excalidraw
-    Caddy -->|nexterm.nycapphouse.com| Nexterm
+    Caddy -->|excalidraw.example.com| Excalidraw
+    Caddy -->|nexterm.example.com| Nexterm
 
     Caddy -.->|mount ro| Caddyfile
     Caddy -.->|mount| Dashboard
@@ -103,11 +103,11 @@ sequenceDiagram
 
     rect rgb(255, 240, 200)
         Note over Caddy,Authelia: Forward Auth Check
-        Caddy->>Authelia: GET /api/verify?rd=https://run.nycapphouse.com/auth/
+        Caddy->>Authelia: GET /api/verify?rd=https://example.com/auth/
 
         alt User Has Valid Session Cookie
-            Authelia->>Authelia: Verify session cookie<br/>.nycapphouse.com domain
-            Authelia-->>Caddy: 200 OK<br/>+ Headers:<br/>Remote-User: dustin<br/>Remote-Groups: admins,users<br/>Remote-Name: Dustin<br/>Remote-Email: dustin@example.com
+            Authelia->>Authelia: Verify session cookie<br/>.example.com domain
+            Authelia-->>Caddy: 200 OK<br/>+ Headers:<br/>Remote-User: username<br/>Remote-Groups: admins,users<br/>Remote-Name: User Name<br/>Remote-Email: user@example.com
 
             rect rgb(200, 255, 200)
                 Note over Caddy,Backend: Request Authorized ✓
@@ -118,7 +118,7 @@ sequenceDiagram
             end
 
         else No Valid Session
-            Authelia-->>Caddy: 302 Redirect<br/>Location: https://run.nycapphouse.com/auth/
+            Authelia-->>Caddy: 302 Redirect<br/>Location: https://example.com/auth/
             Caddy-->>User: 302 Redirect to Login
 
             rect rgb(255, 200, 200)
@@ -127,7 +127,7 @@ sequenceDiagram
                 Authelia-->>User: Login Page
                 User->>Authelia: POST /auth/<br/>username + password + TOTP
                 Authelia->>Authelia: Verify credentials<br/>users_database.yml
-                Authelia-->>User: 302 Redirect to original URL<br/>+ Set-Cookie: session=...<br/>domain=.nycapphouse.com
+                Authelia-->>User: 302 Redirect to original URL<br/>+ Set-Cookie: session=...<br/>domain=.example.com
                 User->>Caddy: GET /portainer/<br/>+ Cookie: session=...
                 Note over Caddy,Backend: Retry original request (now with cookie)
             end
@@ -137,7 +137,7 @@ sequenceDiagram
 
 **Key Points:**
 - Every protected request triggers a subrequest to Authelia
-- Session cookie shared across all `*.nycapphouse.com` domains (SSO)
+- Session cookie shared across all `*.example.com` domains (SSO)
 - Backend services receive user identity via headers
 - Unauthenticated users redirected to login, then back to original URL
 
@@ -150,14 +150,14 @@ Shows all domains and how requests are routed to backend services.
 ```mermaid
 graph LR
     subgraph "External Domains"
-        D1[run.nycapphouse.com]
-        D2[xcal.nycapphouse.com]
-        D3[xcal-storage.nycapphouse.com]
-        D4[xcal-collab.nycapphouse.com]
-        D5[nexterm.nycapphouse.com]
+        D1[example.com]
+        D2[excalidraw.example.com]
+        D3[storage.example.com]
+        D4[collab.example.com]
+        D5[nexterm.example.com]
     end
 
-    subgraph "run.nycapphouse.com Routing"
+    subgraph "example.com Routing"
         D1 --> NoAuth{Path requires auth?}
 
         NoAuth -->|/auth/*| A1["Authelia<br/>Login Portal<br/>❌ No Auth"]
@@ -204,7 +204,7 @@ graph LR
 
 **Path Summary:**
 - **5 domains** total (1 main + 4 service-specific)
-- **5 public paths** on run.nycapphouse.com (Authelia endpoints only)
+- **5 public paths** on example.com (Authelia endpoints only)
 - **All other paths** require authentication
 - **Admin API** additionally checks `Remote-Groups` header for "admins"
 
@@ -442,7 +442,7 @@ graph TB
 
     subgraph "Authentication Layer"
         Authelia[🔐 Authelia SSO]
-        Session[🍪 Session Cookie<br/>domain=.nycapphouse.com<br/>httpOnly, secure, sameSite]
+        Session[🍪 Session Cookie<br/>domain=.example.com<br/>httpOnly, secure, sameSite]
         UserDB[(👥 User Database<br/>Argon2id hashed passwords<br/>TOTP 2FA secrets)]
     end
 
@@ -522,7 +522,7 @@ sequenceDiagram
 
     Note over Caddy,AdminAPI: ✓ Admin authorized
 
-    Caddy->>AdminAPI: POST /users<br/>+ Remote-User: dustin<br/>+ Remote-Groups: admins<br/>Body: {username, password, ...}
+    Caddy->>AdminAPI: POST /users<br/>+ Remote-User: username<br/>+ Remote-Groups: admins<br/>Body: {username, password, ...}
 
     AdminAPI->>AdminAPI: Check Remote-Groups<br/>contains "admins"
 
@@ -577,7 +577,7 @@ sequenceDiagram
 1. **Zero Trust**: All requests authenticated before reaching services
 2. **Forward Auth**: Centralized authentication via Authelia
 3. **Network Isolation**: Services accessible only through Caddy
-4. **Shared Sessions**: SSO via parent domain cookie (`.nycapphouse.com`)
+4. **Shared Sessions**: SSO via parent domain cookie (`.example.com`)
 5. **Docker Socket Pattern**: Controlled access for management services
 6. **Volume Sharing**: Authelia config shared between auth and admin services
 7. **Static + Dynamic**: Dashboard served from host, APIs in containers

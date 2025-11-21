@@ -25,7 +25,7 @@ Development Flow:
 |-------------|----------|---------|--------|
 | **Git Repository** | `/home/dust/projects/walledgarden/walledgarden-gh/` | Source of truth, version control | N/A (templates only) |
 | **Staging** | `/opt/authelia-staging/` | Test changes before production | staging.example.com |
-| **Production** | `/opt/authelia-stack/` | Live deployment | run.nycapphouse.com |
+| **Production** | `/opt/authelia-stack/` | Live deployment | example.com |
 
 ### File Organization
 
@@ -86,7 +86,7 @@ nano /opt/authelia-staging/.env
 
 # Update Caddyfile for staging domain
 nano /opt/authelia-staging/Caddyfile
-# Replace run.nycapphouse.com with staging.example.com
+# Replace example.com with staging.example.com
 
 # Change ports to avoid conflict with production
 nano /opt/authelia-staging/docker-compose.yml
@@ -218,7 +218,7 @@ cd /opt/authelia-stack
 docker compose logs -f
 
 # Test production URL
-# Visit: https://run.nycapphouse.com
+# Visit: https://example.com
 
 # Verify all services work
 # Check for errors
@@ -379,7 +379,7 @@ STORAGE_ENCRYPTION_KEY=<production-secret-here>
 SECRET_KEY=<production-secret-here>
 AUDIT_HMAC_KEY=<production-secret-here>
 NEXTERM_ENCRYPTION_KEY=<production-secret-here>
-DOMAIN=run.nycapphouse.com
+DOMAIN=example.com
 
 # /opt/authelia-staging/.env (STAGING)
 JWT_SECRET=<different-staging-secret>

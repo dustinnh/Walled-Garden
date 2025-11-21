@@ -10,7 +10,7 @@ This document provides a comprehensive visual representation of the entire NYC A
 graph TB
     subgraph "External Access"
         Internet[Internet Users]
-        DNS[DNS: *.nycapphouse.com<br/>31.97.40.249]
+        DNS[DNS: *.example.com<br/>YOUR_SERVER_IP]
     end
 
     subgraph "Host Server - Ubuntu 24.04"
@@ -63,10 +63,10 @@ graph TB
     Caddy -->|Serve Static Files| Dashboard
 
     %% Authenticated routes
-    Caddy -->|xcal.nycapphouse.com| Excalidraw
+    Caddy -->|excalidraw.example.com| Excalidraw
     Caddy -->|/n8n/*| N8N
     Caddy -->|/portainer/*| Portainer
-    Caddy -->|nexterm.nycapphouse.com| Nexterm
+    Caddy -->|nexterm.example.com| Nexterm
     Caddy -->|/api/admin/*| UserAdmin
     Caddy -->|/api/dns/*| DNSTools
 
@@ -109,7 +109,7 @@ sequenceDiagram
     participant Authelia as Authelia SSO
     participant App as Backend App<br/>(Nexterm, n8n, etc.)
 
-    User->>Caddy: 1. Request: https://nexterm.nycapphouse.com
+    User->>Caddy: 1. Request: https://nexterm.example.com
     Caddy->>Authelia: 2. Forward Auth: /api/verify
 
     alt Not Authenticated
@@ -118,7 +118,7 @@ sequenceDiagram
         User->>Authelia: 5a. Login Form
         User->>Authelia: 6a. Submit Credentials
         Authelia->>Authelia: 7a. Verify Password (Argon2id)
-        Authelia-->>User: 8a. Set Session Cookie<br/>(domain: .nycapphouse.com)
+        Authelia-->>User: 8a. Set Session Cookie<br/>(domain: .example.com)
         User->>Caddy: 9a. Retry Original Request
     end
 
@@ -178,17 +178,17 @@ graph LR
 
 | Domain | Target | Purpose |
 |--------|--------|---------|
-| run.nycapphouse.com | 31.97.40.249 | Main dashboard and authentication portal |
-| xcal.nycapphouse.com | 31.97.40.249 | Excalidraw main application |
-| xcal-storage.nycapphouse.com | 31.97.40.249 | Excalidraw storage backend |
-| xcal-collab.nycapphouse.com | 31.97.40.249 | Excalidraw collaboration backend |
-| nexterm.nycapphouse.com | 31.97.40.249 | Nexterm server management |
+| example.com | YOUR_SERVER_IP | Main dashboard and authentication portal |
+| excalidraw.example.com | YOUR_SERVER_IP | Excalidraw main application |
+| storage.example.com | YOUR_SERVER_IP | Excalidraw storage backend |
+| collab.example.com | YOUR_SERVER_IP | Excalidraw collaboration backend |
+| nexterm.example.com | YOUR_SERVER_IP | Nexterm server management |
 
 ## URL Routing Map
 
 ```mermaid
 graph TD
-    Root[https://run.nycapphouse.com]
+    Root[https://example.com]
 
     Root -->|/| Dashboard[Dashboard HTML]
     Root -->|/auth/*| Authelia[Authelia Portal]
@@ -198,11 +198,11 @@ graph TD
     Root -->|/portainer/*| Portainer[Portainer UI]
     Root -->|/n8n/*| N8N[n8n Workflows]
 
-    XCal[https://xcal.nycapphouse.com] --> Excalidraw[Excalidraw App]
-    XCalStorage[https://xcal-storage.nycapphouse.com] --> Excalidraw
-    XCalCollab[https://xcal-collab.nycapphouse.com] --> Excalidraw
+    XCal[https://excalidraw.example.com] --> Excalidraw[Excalidraw App]
+    XCalStorage[https://storage.example.com] --> Excalidraw
+    XCalCollab[https://collab.example.com] --> Excalidraw
 
-    Nexterm[https://nexterm.nycapphouse.com] --> NextermApp[Nexterm App]
+    Nexterm[https://nexterm.example.com] --> NextermApp[Nexterm App]
 
     style Root fill:#667eea,color:#fff
     style Dashboard fill:#ecc94b,color:#000

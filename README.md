@@ -174,7 +174,21 @@ plugins/
 # - output/docker-compose.yml  (services)
 # - output/Caddyfile          (routing)
 # - output/.env.template      (variables)
+# - output/dashboard/         (UI files from plugins)
 ```
+
+### Dashboard Architecture
+
+The dashboard is dynamically generated from your enabled plugins:
+
+1. **Plugin UI Files**: Each plugin can provide HTML interfaces (stored in `plugins/[name]/ui/`)
+2. **Shared Assets**: Common CSS and resources (stored in `dashboard/`)
+3. **Generated Dashboard**: Main page built from plugin manifests showing enabled services
+4. **Build Process**: Combines everything into `output/dashboard/` for deployment
+
+Core plugins provide essential interfaces:
+- **DNS Tools** (`/dns.html`): Network diagnostic utilities
+- **User Admin** (`/admin.html`): Authelia user management
 
 ## Quick Start
 

@@ -14,12 +14,12 @@ Nexterm has been successfully added to the NYC App House walled garden setup. It
 
 **Docker Image:** `germannewsmaker/nexterm:latest`
 **Port:** 6989 (internal only, no published ports)
-**Subdomain:** nexterm.nycapphouse.com
+**Subdomain:** nexterm.example.com
 
 Generated encryption key for secure password storage:
 ```bash
 openssl rand -hex 32
-# Generated: 178d62d7ef53194821d437b2dc1db715e01c561de2910350346d838d62b5b74f
+# Example output: REPLACE_WITH_YOUR_GENERATED_ENCRYPTION_KEY
 ```
 
 ### 2. Docker Compose Configuration
@@ -32,7 +32,7 @@ nexterm:
   container_name: nexterm
   restart: unless-stopped
   environment:
-    - ENCRYPTION_KEY=178d62d7ef53194821d437b2dc1db715e01c561de2910350346d838d62b5b74f
+    - ENCRYPTION_KEY=${NEXTERM_ENCRYPTION_KEY}  # Generate with: openssl rand -hex 32
   volumes:
     - nexterm_data:/app/data
   networks:
@@ -56,11 +56,11 @@ Added subdomain routing to `/opt/authelia-stack/Caddyfile`:
 
 ```caddyfile
 # Nexterm server management
-nexterm.nycapphouse.com {
+nexterm.example.com {
     encode gzip
 
     forward_auth authelia:9091 {
-        uri /api/verify?rd=https://run.nycapphouse.com/auth/
+        uri /api/verify?rd=https://example.com/auth/
         copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
     }
 
@@ -86,15 +86,15 @@ access_control:
   default_policy: deny
   rules:
     - domain:
-        - "run.nycapphouse.com"
-        - "xcal.nycapphouse.com"
-        - "xcal-storage.nycapphouse.com"
-        - "xcal-collab.nycapphouse.com"
-        - "nexterm.nycapphouse.com"  # Added
+        - "example.com"
+        - "excalidraw.example.com"
+        - "storage.example.com"
+        - "collab.example.com"
+        - "nexterm.example.com"  # Added
       policy: one_factor
 ```
 
-**Security Note:** This was the critical step - without adding nexterm.nycapphouse.com to the access control rules, all requests were returning 403 Forbidden errors.
+**Security Note:** This was the critical step - without adding nexterm.example.com to the access control rules, all requests were returning 403 Forbidden errors.
 
 ### 5. DNS Configuration
 
@@ -102,8 +102,8 @@ Added DNS A record:
 ```
 Type: A
 Host: nexterm
-Domain: nycapphouse.com
-Value: 31.97.40.249
+Domain: example.com
+Value: YOUR_SERVER_IP
 ```
 
 ### 6. Dashboard Integration
@@ -113,7 +113,7 @@ Updated `/opt/authelia-stack/dashboard/index.html` to add Nexterm tile:
 ```html
 <li class="app-card">
   <span class="app-icon">🖥️</span>
-  <a href="https://nexterm.nycapphouse.com">Nexterm</a>
+  <a href="https://nexterm.example.com">Nexterm</a>
   <p class="app-description">Server management via SSH, VNC & RDP</p>
 </li>
 ```
@@ -124,7 +124,7 @@ Caddy automatically obtained SSL certificate from Let's Encrypt after DNS propag
 
 **Certificate Details:**
 - Issuer: Let's Encrypt (ACME v02)
-- Domain: nexterm.nycapphouse.com
+- Domain: nexterm.example.com
 - Status: Valid
 
 ### 8. Service Deployment
@@ -146,12 +146,12 @@ docker compose restart authelia caddy
 
 **Root Cause:** Nexterm is a single-page application that loads assets from absolute paths (e.g., `/assets/index.js`). These paths don't match the `/nexterm/*` pattern, causing Caddy to return the dashboard's index.html instead of proxying to Nexterm.
 
-**Resolution:** Switched to subdomain-based routing (nexterm.nycapphouse.com)
+**Resolution:** Switched to subdomain-based routing (nexterm.example.com)
 
 ### Issue 2: SSL Certificate Acquisition Failed
 
 **Problem:** `ERR_SSL_PROTOCOL_ERROR` - Certificate acquisition failed
-**Error in logs:** `DNS problem: NXDOMAIN looking up A for nexterm.nycapphouse.com`
+**Error in logs:** `DNS problem: NXDOMAIN looking up A for nexterm.example.com`
 
 **Root Cause:** Caddy attempted certificate acquisition before DNS had fully propagated to Let's Encrypt's servers.
 
@@ -159,31 +159,31 @@ docker compose restart authelia caddy
 
 ### Issue 3: 403 Forbidden Errors
 
-**Problem:** All requests to nexterm.nycapphouse.com returned 403 Forbidden
-**Error in Authelia logs:** `Access to 'https://nexterm.nycapphouse.com/' is forbidden to user 'dustin'`
+**Problem:** All requests to nexterm.example.com returned 403 Forbidden
+**Error in Authelia logs:** `Access to 'https://nexterm.example.com/' is forbidden to user '[username]'`
 
-**Root Cause:** nexterm.nycapphouse.com was not included in Authelia's access control rules, causing the default deny policy to block all requests.
+**Root Cause:** nexterm.example.com was not included in Authelia's access control rules, causing the default deny policy to block all requests.
 
-**Resolution:** Added nexterm.nycapphouse.com to the allowed domains in Authelia configuration
+**Resolution:** Added nexterm.example.com to the allowed domains in Authelia configuration
 
 ## Initial Setup Instructions
 
 ### First-Time Access
 
 1. **Authenticate with Authelia:**
-   - Visit https://run.nycapphouse.com
-   - Login with Authelia credentials (username: dustin)
+   - Visit https://example.com
+   - Login with Authelia credentials
 
 2. **Access Nexterm:**
    - Click the Nexterm tile on the dashboard
-   - Or visit https://nexterm.nycapphouse.com directly
+   - Or visit https://nexterm.example.com directly
 
 3. **Language Selection:**
    - Select "English" when prompted
 
 4. **Create First User:**
-   - Username: dustin
-   - Password: F)CKY)U420 (or custom password)
+   - Username: [your_username]
+   - Password: [your_password]
    - First user is automatically assigned administrator role
 
 ### Authentication Model
@@ -311,11 +311,11 @@ docker run --rm -v authelia-stack_nexterm_data:/data -v $(pwd):/backup \
 ## Deployment Verification
 
 ✅ Container running: `docker compose ps nexterm`
-✅ SSL certificate valid: https://nexterm.nycapphouse.com
+✅ SSL certificate valid: https://nexterm.example.com
 ✅ Authelia authentication: Access control configured
 ✅ Database initialized: 9 migrations completed
-✅ Dashboard integration: Tile visible at https://run.nycapphouse.com
-✅ DNS resolution: nexterm.nycapphouse.com → 31.97.40.249
+✅ Dashboard integration: Tile visible at https://example.com
+✅ DNS resolution: nexterm.example.com → YOUR_SERVER_IP
 
 ## Post-Installation Notes
 
